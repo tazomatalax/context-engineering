@@ -1,11 +1,11 @@
 {
   "name": "@tazomatalax/context-engineering-installer",
-  "version": "1.0.1",
-  "description": "Automated installer for Context Engineering workflow in existing projects",
+  "version": "2.0.0",
+  "description": "A simple installer for the Context Engineering toolkit.",
   "main": "index.js",
   "bin": {
-    "context-install": "./bin/install.js",
-    "ce-install": "./bin/install.js"
+    "context-engineering-installer": "./bin/install.js",
+    "context-engineering-uninstaller": "./bin/uninstall.js"
   },
   "scripts": {
     "test": "node test/test-installer.js",
@@ -19,14 +19,8 @@
     "installer"
   ],
   "dependencies": {
-    "@octokit/rest": "^20.0.2",
-    "commander": "^11.1.0",
-    "inquirer": "^9.2.12",
     "fs-extra": "^11.1.1",
-    "chalk": "^4.1.2",
-    "ora": "^5.4.1",
-    "node-fetch": "^2.7.0",
-    "js-yaml": "^4.1.0"
+    "chalk": "^4.1.2"
   },
   "repository": {
     "type": "git",
@@ -36,8 +30,6 @@
   "license": "MIT",
   "files": [
     "bin/",
-    "lib/",
-    "templates/",
-    "README.md"
+    "toolkit/"
   ]
 }

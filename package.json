@@ -1,5 +1,5 @@
 {
-  "name": "context-engineering-installer",
+  "name": "context-engineering",
   "version": "1.0.2",
   "description": "A refined hybrid workflow for context engineering with GitHub integration",
   "main": "index.js",
