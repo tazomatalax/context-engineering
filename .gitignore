@@ -1,0 +1,21 @@
+venv
+venv_linux
+__pycache__
+.ruff_cache
+.pytest_cache
+
+# Node.js
+.env
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+dist/
+build/
+coverage/
+*.tmp
+*.temp
+.git/
+.claude/settings.local.json

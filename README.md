@@ -1,0 +1,385 @@
+# Context Engineering Toolkit
+
+A comprehensive toolkit for Context Engineering - the discipline of engineering context for AI coding assistants so they have the information necessary to get the job done end to end.
+
+> **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
+
+## 🚀 Quick Start
+
+### 1. Install the Toolkit
+
+```bash
+# Navigate to your existing project
+cd your-existing-project
+
+# Install Context Engineering toolkit
+npx context-engineering-installer
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your GitHub credentials
+```
+
+### 2. Draft a Plan from an Idea
+
+```bash
+# In Claude Code, describe your goal
+/create-task "Add a dark mode toggle to the settings page"
+```
+
+This creates a detailed plan in `temp/task-draft-{timestamp}.md`.
+
+### 3. Finalize and Post the Plan
+
+```bash
+# Review and edit the draft file, then post it to GitHub
+node scripts/post-issue.js temp/task-draft-{...}.md
+```
+
+### 4. Start the Task
+
+```bash
+# This fetches the full plan (issue + comments) into a local file
+/start-task --issue=123
+```
+
+### 5. Execute and Submit
+
+```bash
+# The AI implements the plan, running ./validate.sh until it passes
+/execute-prp PRPs/active/123-add-dark-mode-toggle.md
+
+# Finally, submit the completed work as a Pull Request
+/submit-pr --issue=123
+```
+
+### The Plan → Execute → Submit Workflow
+
+Context Engineering follows a streamlined **Plan → Execute → Submit** workflow that prioritizes team collaboration and real-world usability.
+
+## 📚 Table of Contents
+
+- [What is Context Engineering?](#what-is-context-engineering)
+- [The Plan → Execute → Submit Workflow](#the-plan--execute--submit-workflow)
+- [Installation and Setup](#installation-and-setup)
+- [Command Reference](#command-reference)
+- [Toolkit Structure](#toolkit-structure)
+- [Best Practices](#best-practices)
+- [Advanced Features](#advanced-features)
+
+## What is Context Engineering?
+
+Context Engineering represents a paradigm shift from traditional prompt engineering:
+
+### Prompt Engineering vs Context Engineering
+
+**Prompt Engineering:**
+- Focuses on clever wording and specific phrasing
+- Limited to how you phrase a task
+- Like giving someone a sticky note
+
+**Context Engineering:**
+- A complete system for providing comprehensive context
+- Includes documentation, examples, rules, patterns, and validation
+- Like writing a full screenplay with all the details
+
+### Why Context Engineering Matters
+
+1. **Reduces AI Failures**: Most agent failures aren't model failures - they're context failures
+2. **Ensures Consistency**: AI follows your project patterns and conventions
+3. **Enables Complex Features**: AI can handle multi-step implementations with proper context
+4. **Self-Correcting**: Validation loops allow AI to fix its own mistakes
+
+## The Plan → Execute → Submit Workflow
+
+The new workflow prioritizes **real-world usability, safety, and collaboration** over rigid automation:
+
+### Workflow Visualization
+
+```mermaid
+graph TD
+    subgraph "Phase 1: Plan & Refine"
+        A[Idea or Manual Issue] --> B{AI helps create/refine a plan};
+        B --> C[GitHub Issue is the Plan of Record];
+    end
+
+    subgraph "Phase 2: Execute & Validate"
+        C --> D{AI pulls the full plan for local execution};
+        D --> E{AI implements code and runs validation loops};
+    end
+    
+    subgraph "Phase 3: Submit & Review"
+        E --> F[AI helps submit PR with Dev Notes];
+    end
+
+    style C fill:#d4edda,stroke:#28a745,font-weight:bold
+```
+
+### Workflow Commands
+
+#### For New Tasks (Plan from Scratch):
+```bash
+# 1. Create comprehensive task from minimal prompt
+/create-task "Add dark mode toggle to settings"
+
+# 2. Edit the generated draft, then post to GitHub
+node scripts/post-issue.js temp/task-draft-{timestamp}.md
+
+# 3. Fetch complete context and start implementation  
+/start-task --issue=123
+
+# 4. Execute the comprehensive plan
+/execute-prp PRPs/active/123-feature-name.md
+
+# 5. Submit with AI-generated developer notes
+/submit-pr --issue=123
+```
+
+#### For Simple Manual Issues (Refine Existing):
+```bash
+# 1. Refine a simple issue created by PM/teammate
+/refine-task --issue=123
+
+# 2. Fetch complete context after refinement
+/start-task --issue=123
+
+# 3. Execute the comprehensive plan  
+/execute-prp PRPs/active/123-feature-name.md
+
+# 4. Submit with AI-generated developer notes
+/submit-pr --issue=123
+```
+
+### Key Advantages
+
+- **GitHub Issues as Single Source of Truth**: The plan lives on GitHub for full team visibility
+- **Minimally Invasive Installation**: Safe file deployment without project analysis
+- **AI-Assisted Guided Configuration**: Collaborate with AI to configure for your specific project
+- **Graceful Handling of Unstructured Inputs**: Convert simple ideas into actionable plans
+- **Automate Toil, Not Thinking**: Automate repetitive tasks while keeping humans in control
+
+## Installation and Setup
+
+### 1. Install the Toolkit
+
+```bash
+# In your existing project directory
+npx context-engineering-installer
+
+# Or with options
+npx context-engineering-installer --yes        # Skip prompts
+npx context-engineering-installer --dry-run    # Preview installation
+```
+
+### 2. Configure Environment
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit with your GitHub credentials
+GITHUB_TOKEN=your_personal_access_token_here
+GITHUB_REPO=owner/repo-name
+```
+
+**Creating a GitHub Personal Access Token:**
+1. Go to GitHub Settings → Developer settings → Personal access tokens
+2. Generate a new token with `repo` scope
+3. Copy the token to your `.env` file
+
+### 3. Configure Validation Script
+
+The installer creates a generic `validate.sh` template. Configure it for your project:
+
+```bash
+# For Node.js projects, uncomment:
+# npx eslint .
+# npm test
+
+# For Python projects, uncomment:
+# ruff check .
+# pytest
+```
+
+Your AI assistant can help configure this script for your specific project needs.
+
+## Command Reference
+
+### `/create-task "Brief description"`
+Creates a comprehensive GitHub issue draft from a minimal prompt.
+
+- **Input**: Brief description of desired feature
+- **Output**: Detailed issue draft in `temp/task-draft-{timestamp}.md`
+- **Next Step**: Edit draft, then run `node scripts/post-issue.js temp/task-draft-{filename}`
+
+### `/refine-task --issue=<number>`
+Converts simple, manually-created GitHub issues into actionable plans.
+
+- **Input**: Issue number of existing simple issue
+- **Output**: Detailed implementation plan posted as comment on the issue
+- **Use Case**: When PM/team member creates basic issue that needs technical enrichment
+
+### `/start-task --issue=<number>`
+Fetches complete GitHub issue context (including all comments) for local execution.
+
+- **Input**: Issue number with comprehensive plan
+- **Output**: PRP file in `PRPs/active/{issue-number}-{title}.md` with full context
+- **Next Step**: `/execute-prp PRPs/active/{filename}.md`
+
+### `/execute-prp <path-to-prp-file>`
+Executes a PRP file to implement the feature.
+
+- **Input**: Path to PRP file with comprehensive requirements
+- **Process**: AI reads context, creates plan, implements code, runs validation
+- **Quality Gate**: Must pass `./validate.sh` before completion
+
+### `/validate-execution <path-to-prp-file>` (Optional)
+AI-powered logical review of implemented code against the plan.
+
+- **Input**: Path to original PRP file
+- **Process**: Reviews git diff, checks for logical flaws, suggests improvements
+- **Output**: Detailed code review report with actionable feedback
+
+### `/submit-pr --issue=<number>`
+Creates pull request with automated developer notes.
+
+- **Input**: Issue number of completed implementation
+- **Process**: Generates developer notes from git diff, creates PR, links to issue
+- **Output**: Pull request with AI-generated summary for human reviewers
+
+## Toolkit Structure
+
+### Directory Structure Created by Installer
+
+```
+your-project/
+├── .claude/
+│   └── commands/
+│       ├── create-task.md        # Creates comprehensive issue drafts
+│       ├── refine-task.md        # Enriches simple issues
+│       ├── start-task.md         # Fetches complete context
+│       ├── execute-prp.md        # Implements features
+│       ├── validate-execution.md # Optional code review
+│       └── submit-pr.md          # Submits with dev notes
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   └── feature-request.yml   # Structured issue template
+│   └── PULL_REQUEST_TEMPLATE.md  # PR template
+├── scripts/
+│   ├── generation/
+│   │   └── generate-from-issue.js # Fetches issues and creates PRPs
+│   └── submission/
+│       └── submit-pr.js          # Creates PRs with dev notes
+├── PRPs/
+│   ├── active/                   # Generated PRPs for development
+│   └── templates/
+│       └── prp_base.md          # Base PRP template
+├── temp/                         # Temporary issue drafts
+├── advanced_tools.md             # Optional AI power-ups guide
+├── .env.example                  # Environment template
+└── validate.sh                   # Quality gate script (configure required)
+```
+
+### Key Files Explained
+
+**`validate.sh`**: Quality gate script that must pass before work is considered complete. Configure with your project-specific linting, testing, and validation commands.
+
+**`advanced_tools.md`**: Guide for optional AI power-ups like live documentation access (Context7) and web search (Brave Search).
+
+**`.env.example`**: Template for environment variables including GitHub credentials.
+
+## Best Practices
+
+### 1. Configure Your Quality Gates
+- Customize `validate.sh` with your project's linting and testing commands
+- Include type checking, formatting, and any project-specific validations
+- AI will iterate until all quality gates pass
+
+### 2. Use GitHub Issues as Source of Truth
+- All planning happens in GitHub issues for team visibility
+- Use `/create-task` for comprehensive planning from minimal prompts
+- Use `/refine-task` to enrich simple issues from team members
+
+### 3. Leverage the Complete Context
+- `/start-task` fetches not just the issue but all comments and discussion
+- This ensures AI has the complete conversation context
+- Implementation plans from `/refine-task` are included automatically
+
+### 4. Review AI-Generated Developer Notes
+- `/submit-pr` generates developer notes from git diff analysis
+- These notes help human reviewers understand changes quickly
+- Review and edit PR content as needed before merging
+
+### 5. Customize for Your Project
+- Update `CLAUDE.md` with your specific conventions and patterns
+- Add examples in your codebase for AI to follow
+- The generic toolkit adapts to your specific needs
+
+## Advanced Features
+
+### Optional AI Power-Ups
+
+Enable advanced AI capabilities by following the guide in `advanced_tools.md`:
+
+**🧠 Live Documentation (Context7)**
+- Always uses latest, most accurate library documentation
+- No API key required, hosted server
+- Highly recommended for all projects
+
+**🌐 Web Search (Brave Search)**  
+- Research topics and find information not in codebase
+- Requires free API key from Brave Search
+- Useful for complex integrations and research tasks
+
+### Validation Script Customization
+
+The `validate.sh` script can be enhanced with:
+- Code coverage requirements
+- Security scanning
+- Performance benchmarks
+- Database migration checks
+- Custom project-specific validations
+
+### Multiple Project Types
+
+The toolkit works with any project type:
+- **Node.js/TypeScript**: ESLint, Prettier, Jest/Vitest
+- **Python**: Ruff, MyPy, Pytest
+- **React**: Component patterns and testing
+- **Full-stack**: Frontend + backend validation
+- **Custom**: Add your own validation commands
+
+## Resources
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [GitHub Personal Access Tokens](https://github.com/settings/tokens)
+- [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
+
+## Troubleshooting
+
+### Common Issues
+
+**"GITHUB_TOKEN is required"**
+- Ensure `.env` file exists with valid GitHub token
+- Token needs `repo` scope for private repositories
+
+**"validate.sh not executable"**
+- Run `chmod +x validate.sh` on Unix systems
+- On Windows, this is usually not needed
+
+**"No changes to commit"**
+- Ensure you've implemented code changes before running `/submit-pr`
+- Or switch to your existing feature branch before running `/submit-pr`
+- Check `git status` to see current changes
+
+**Script Usage Errors**
+- Always use the exact format: `/submit-pr --issue=123`
+- Scripts work from any directory within your project
+- Environment variables are automatically detected from project root
+- Use `--notes-file=temp/pr-notes.md` for custom developer notes
+
+**Installation fails**
+- Run with `--dry-run` first to see what would be installed
+- Ensure you're in a project directory (not empty folder)
+
+For more help, check the toolkit files or create an issue in the repository.

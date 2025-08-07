@@ -1,0 +1,43 @@
+{
+  "name": "@tazomatalax/context-engineering-installer",
+  "version": "1.0.1",
+  "description": "Automated installer for Context Engineering workflow in existing projects",
+  "main": "index.js",
+  "bin": {
+    "context-install": "./bin/install.js",
+    "ce-install": "./bin/install.js"
+  },
+  "scripts": {
+    "test": "node test/test-installer.js",
+    "publish": "npm publish"
+  },
+  "keywords": [
+    "context-engineering",
+    "ai-workflow",
+    "github-automation",
+    "claude-code",
+    "installer"
+  ],
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "commander": "^11.1.0",
+    "inquirer": "^9.2.12",
+    "fs-extra": "^11.1.1",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "node-fetch": "^2.7.0",
+    "js-yaml": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tazomatalax/context-engineering.git"
+  },
+  "author": "Context Engineering Community",
+  "license": "MIT",
+  "files": [
+    "bin/",
+    "lib/",
+    "templates/",
+    "README.md"
+  ]
+}
