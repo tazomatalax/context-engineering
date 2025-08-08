@@ -90,7 +90,9 @@ After creating the file, tell the user:
 
 1. Where the draft file is located
 2. How to edit it before posting
-3. The next command to run for posting to GitHub
+3. **EXACTLY** this command to post to GitHub: `node scripts/post-issue.js temp/task-draft-{timestamp}.md`
+
+**IMPORTANT**: Always tell users to run `scripts/post-issue.js`, NOT `scripts/generation/generate-from-issue.js`. The generate-from-issue.js script fetches FROM GitHub, while post-issue.js posts TO GitHub.
 
 ### Context Engineering Principles:
 
