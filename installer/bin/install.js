@@ -284,7 +284,7 @@ function runUninstaller() {
     '.github'
   ];
   
-  if (filesToRemove.length === 0 && dirsToRemove.length === 0 && !envExampleNeedsCleanup && !settingsNeedCleanup) {
+  if (filesToRemove.length === 0 && dirsToRemove.length === 0 && !envExampleNeedsCleanup) {
     console.log(chalk.green('\n✅ No Context Engineering files found. Already clean!'));
     return;
   }

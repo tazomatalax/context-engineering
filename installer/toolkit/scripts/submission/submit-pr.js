@@ -93,6 +93,11 @@ const octokit = new Octokit({
   auth: GITHUB_TOKEN,
 });
 
+// Determine if a branch name is a feature branch per toolkit conventions
+function isFeatureBranch(branch) {
+  return branch && (branch.startsWith('feat/') || branch.startsWith('feature/'));
+}
+
 /**
  * Executes a shell command and returns the output
  */
@@ -406,7 +411,8 @@ async function main() {
   let developerNotes = '';
   if (notesFile) {
     try {
-      developerNotes = await fs.readFile(notesFile, 'utf8');
+  const fsp = fs.promises;
+  developerNotes = await fsp.readFile(notesFile, 'utf8');
       console.log(`📝 Loaded developer notes from ${notesFile}`);
     } catch (error) {
       console.error(`❌ Error reading notes file ${notesFile}: ${error.message}`);
@@ -429,13 +435,13 @@ async function main() {
     const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
     const status = execCommand('git status --porcelain');
     
-    if (!status && !currentBranch.startsWith('feature/')) {
+  if (!status && !isFeatureBranch(currentBranch)) {
       console.error('❌ Error: No changes to commit and not on a feature branch.');
       console.error('   Either make some changes first, or switch to your feature branch.');
       process.exit(1);
     }
     
-    if (!status && currentBranch.startsWith('feature/')) {
+  if (!status && isFeatureBranch(currentBranch)) {
       console.log('ℹ️  No uncommitted changes found, but you\'re on a feature branch.');
       console.log('   Will attempt to push existing commits and create PR.');
     }
@@ -455,7 +461,7 @@ async function main() {
   console.log(`✅ Retrieved: "${issue.title}"`);
 
   // Create branch name and commit message
-  const branchName = createBranchName(issueNumber, issue.title);
+  let branchName = createBranchName(issueNumber, issue.title);
   const commitMessage = createCommitMessage(issueNumber, issue.title);
 
   console.log(`📝 Branch: ${branchName}`);
@@ -473,7 +479,7 @@ async function main() {
   const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
   const status = execCommand('git status --porcelain');
   
-  if (currentBranch.startsWith('feature/') && !status) {
+  if (isFeatureBranch(currentBranch) && !status) {
     // Already on feature branch with no uncommitted changes
     console.log(`ℹ️  Using existing feature branch: ${currentBranch}`);
     console.log(`⬆️  Pushing existing commits to remote...`);
