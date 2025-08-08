@@ -166,9 +166,8 @@ node scripts/post-issue.js temp/task-draft-{timestamp}.md
 # In your existing project directory
 npx context-engineering-installer
 
-# Or with options
-npx context-engineering-installer --yes        # Skip prompts
-npx context-engineering-installer --dry-run    # Preview installation
+# To uninstall later if needed
+npx context-engineering-uninstaller
 ```
 
 ### 2. Configure Environment
@@ -379,7 +378,11 @@ The toolkit works with any project type:
 - Use `--notes-file=temp/pr-notes.md` for custom developer notes
 
 **Installation fails**
-- Run with `--dry-run` first to see what would be installed
 - Ensure you're in a project directory (not empty folder)
+- Check that you have write permissions in the directory
+
+**Want to remove the toolkit?**
+- Run `npx context-engineering-uninstaller` to cleanly remove all files
+- The uninstaller will show exactly what will be deleted before proceeding
 
 For more help, check the toolkit files or create an issue in the repository.

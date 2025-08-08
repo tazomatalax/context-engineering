@@ -1,215 +1,167 @@
 # Context Engineering Installer
 
-Automated installer for adding Context Engineering workflow to existing projects.
+Simple installer for adding Context Engineering workflow to any existing project.
 
 ## 🚀 Quick Install
 
 ```bash
 # Install in any existing project directory
-npx @tazomatalax/context-engineering-installer
+npx context-engineering-installer
 
-# Or install globally
-npm install -g @tazomatalax/context-engineering-installer
-context-install
+# To uninstall later
+npx context-engineering-uninstaller
 ```
 
 ## ✨ What It Does
 
-The installer analyzes your existing project and automatically:
+The installer is a **simple delivery service** that copies toolkit files to your project:
 
-1. **Detects Project Type**: Analyzes package.json, file extensions, frameworks
-2. **Selects Best Template**: Chooses optimized Context Engineering setup
-3. **Installs Core Files**: CLAUDE.md, validate.sh, GitHub templates
-4. **Configures Commands**: `/create-issue`, `/generate-prp`, `/execute-prp`
-5. **Sets Up Scripts**: GitHub integration, issue posting, PR creation
-6. **Customizes Everything**: Project-specific validation, examples, docs
-
-## 🎯 Supported Project Types
-
-- **Node.js/TypeScript** - Frontend, backend, full-stack apps
-- **Python** - Django, FastAPI, Flask, general Python projects
-- **React** - Create React App, Next.js, Vite projects
-- **Pydantic AI** - AI agent development projects
-- **MCP Server** - Model Context Protocol servers
-- **General** - Any project type with universal patterns
-
-## 🛠️ Installation Options
-
-### Interactive Mode (Recommended)
-
-```bash
-npx @tazomatalax/context-engineering-installer
-```
-
-Guides you through project analysis and feature selection.
-
-### Quick Mode
-
-```bash
-npx @tazomatalax/context-engineering-installer --yes
-```
-
-Uses smart defaults based on project detection.
-
-### Custom Template
-
-```bash
-npx @tazomatalax/context-engineering-installer --template python
-```
-
-Force specific template instead of auto-detection.
-
-### Dry Run
-
-```bash
-npx @tazomatalax/context-engineering-installer --dry-run
-```
-
-See what would be installed without making changes.
+1. **No Analysis**: No project detection or smart configuration - just reliable file deployment
+2. **Safe Copying**: Uses `overwrite: false` to never replace your existing files
+3. **Complete Toolkit**: All commands, templates, and scripts in one package
+4. **Clean Uninstall**: Easy removal when you want to experiment or clean up
 
 ## 📁 What Gets Installed
 
-### Core Files
-
-- `CLAUDE.md` - Project-specific AI assistant rules
-- `validate.sh` - Validation script for your project type
-- `.env.example` - Environment variables template
-- `temp/` - Directory for issue drafts
+### Core AI Commands
+- `.claude/commands/` - All 6 Context Engineering commands:
+  - `create-task.md` - Create comprehensive issue drafts
+  - `refine-task.md` - Enrich simple manual issues  
+  - `start-task.md` - Fetch complete context for execution
+  - `execute-prp.md` - Implement features from plans
+  - `validate-execution.md` - AI code review (optional)
+  - `submit-pr.md` - Submit PRs with developer notes
 
 ### GitHub Integration
-
 - `.github/ISSUE_TEMPLATE/feature-request.yml` - Structured issue template
 - `.github/PULL_REQUEST_TEMPLATE.md` - PR template with validation checklist
-- `scripts/post-issue.js` - Script to post issues to GitHub
 
-### Claude Commands
+### Automation Scripts
+- `scripts/generation/generate-from-issue.js` - Fetch GitHub issues → PRPs
+- `scripts/submission/submit-pr.js` - Create PRs with developer notes
 
-- `.claude/commands/create-issue.md` - `/create-issue` command
-- `.claude/commands/generate-prp.md` - `/generate-prp` command
-- `.claude/commands/execute-prp.md` - `/execute-prp` command
-- `.claude/commands/submit-pr.md` - `/submit-pr` command
+### Configuration & Templates
+- `PRPs/templates/prp_base.md` - Base PRP template
+- `PRPs/active/` - Directory for active development plans
+- `temp/` - Directory for issue drafts
+- `.env.example` - Environment variables template
+- `validate.sh` - Quality gate script (requires customization)
+- `AI_RULES.md` - Project-specific AI assistant rules
+- `advanced_tools.md` - Optional AI power-ups guide
 
-### Project Structure
+## 🔧 After Installation
 
-- `PRPs/active/` - Generated PRPs for development
-- `PRPs/templates/` - PRP templates
-- `examples/` - Code examples and patterns (project-specific)
-
-## 🔧 Configuration
-
-After installation, configure your environment:
-
+### 1. Configure Environment
 ```bash
-# 1. Copy environment template
+# Copy and edit environment file
 cp .env.example .env
 
-# 2. Add GitHub token
-GITHUB_TOKEN=your_token_here
-GITHUB_REPO_OWNER=your_username
-GITHUB_REPO_NAME=your_repo
-
-# 3. Install dependencies (if package.json was updated)
-npm install
+# Add your GitHub credentials:
+GITHUB_TOKEN=your_personal_access_token_here
+GITHUB_REPO=owner/repo-name
 ```
+
+### 2. Configure Validation Script
+The installer creates a generic `validate.sh` template. **You must customize it** for your project:
+
+```bash
+# For Node.js projects:
+# echo "Running linter..."
+# npx eslint .
+# echo "Running tests..." 
+# npm test
+
+# For Python projects:
+# echo "Running linter..."
+# ruff check .
+# echo "Running tests..."
+# pytest
+```
+
+**💡 Pro tip:** Ask your AI assistant to help configure this script for your specific project type.
 
 ## 🚀 Your New Workflow
 
-Once installed, use the streamlined Context Engineering workflow:
+Once configured, use the streamlined Context Engineering workflow:
 
 ```bash
-# 1. Create issue from minimal prompt
-/create-issue "Add dark mode toggle"
+# 1. Create comprehensive issue from brief idea
+/create-task "Add dark mode toggle to settings"
 
-# 2. Edit the generated draft
-# Edit temp/issue-draft-{timestamp}.md
+# 2. Edit the generated draft, then post to GitHub  
+node scripts/post-issue.js temp/task-draft-{timestamp}.md
 
-# 3. Post to GitHub
-node scripts/post-issue.js temp/issue-draft-{timestamp}.md
+# 3. Start implementation (fetches full context)
+/start-task --issue=123
 
-# 4. Generate PRP
-/generate-prp --issue=123
+# 4. Execute the plan (AI implements with validation)
+/execute-prp PRPs/active/123-add-dark-mode-toggle.md
 
-# 5. Execute PRP
-/execute-prp PRPs/active/123-add-dark-mode.md
-
-# 6. Validate & Submit
-./validate.sh
+# 5. Submit with AI-generated developer notes
 /submit-pr --issue=123
 ```
 
-## 🎨 Customization
+## 🧹 Clean Uninstall
 
-The installer creates project-specific configurations:
+When you want to remove the toolkit:
 
-### Language-Specific Validation
+```bash
+npx context-engineering-uninstaller
+```
 
-- **Python**: Ruff, MyPy, Pytest
-- **Node.js**: ESLint, TypeScript, Jest/Vitest
-- **Auto-detects**: Test commands, linting tools, build processes
+The uninstaller will:
+- Show exactly what files will be removed
+- Ask for confirmation before deleting anything
+- Remove all toolkit files and empty directories
+- Leave your project files completely untouched
 
-### Framework Patterns
+Perfect for experimentation or trying Context Engineering on multiple projects.
 
-- **React**: Component patterns, testing strategies
-- **Python**: Module structure, testing conventions
-- **API**: Request/response patterns, error handling
+## 🎯 Design Philosophy
 
-### Project Structure
+This installer follows the **"Delivery Service" approach**:
 
-- Respects existing conventions
-- Integrates with current tooling
-- Preserves your project's patterns
+- ✅ **Reliable**: Simple file copying with no complex logic to break
+- ✅ **Safe**: Never overwrites existing files
+- ✅ **Predictable**: Same files installed every time
+- ✅ **Reversible**: Clean uninstall removes everything
+- ✅ **Transparent**: You can see exactly what's being installed
+
+**No more:**
+- ❌ Project analysis that might guess wrong  
+- ❌ Smart configuration that breaks on edge cases
+- ❌ Complex logic that fails in unexpected ways
+- ❌ Permanent installation that's hard to remove
 
 ## 🔄 Updates
 
-To update Context Engineering in your project:
+To update to a newer version:
 
 ```bash
-# Re-run installer with backup
-npx @tazomatalax/context-engineering-installer --backup
+# Uninstall current version
+npx context-engineering-uninstaller
+
+# Install latest version  
+npx context-engineering-installer@latest
 ```
 
-Existing customizations are preserved, new features added.
+Your customizations in `validate.sh` and `.env` will be preserved since the installer never overwrites existing files.
 
 ## 🆘 Troubleshooting
 
-### Permission Issues
+### Installation Issues
+- **Permission denied**: Ensure you have write permissions in the directory
+- **Files already exist**: Installer skips existing files (this is normal)
+- **Wrong directory**: Make sure you're in your project root
 
-```bash
-chmod +x validate.sh
-```
+### After Installation
+- **Commands not found**: Restart Claude Code to pick up new `.claude/commands/`
+- **GitHub errors**: Check your `GITHUB_TOKEN` and `GITHUB_REPO` in `.env`
+- **Validation fails**: Customize `validate.sh` with your project's commands
 
-### Missing Dependencies
-
-```bash
-npm install @octokit/rest dotenv js-yaml
-```
-
-### GitHub Integration
-
-1. Create Personal Access Token with `repo` scope
-2. Add to `.env` file
-3. Test with `node scripts/post-issue.js --help`
-
-## 📊 Project Analysis
-
-The installer analyzes these indicators:
-
-- **Package files**: package.json, requirements.txt, Cargo.toml
-- **Config files**: tsconfig.json, .eslintrc, pytest.ini
-- **File extensions**: .py, .ts, .js, .rs
-- **Framework signatures**: React, Flask, Django, etc.
-- **Build tools**: Webpack, Vite, Rollup
-
-Score-based selection chooses the best template for your project.
-
-## 🤝 Contributing
-
-Found a bug or want to add support for a new project type?
-
-1. Fork the repository
-2. Add your project type to `lib/project-analyzer.js`
-3. Create template in `templates/`
-4. Submit pull request
+### Uninstall Issues
+- **Files not removed**: Some files may have been customized (this is intentional)
+- **Directories remain**: Empty parent directories are automatically cleaned up
 
 ## 📄 License
 
