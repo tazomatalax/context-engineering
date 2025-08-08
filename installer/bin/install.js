@@ -146,14 +146,68 @@ function extractEnvVars(content, section) {
   return vars;
 }
 
+function cleanupEnvExample(envExamplePath) {
+  const content = fs.readFileSync(envExamplePath, 'utf8');
+  const lines = content.split('\n');
+  
+  // Find the start of Context Engineering section
+  let ceStartIndex = -1;
+  let ceEndIndex = -1;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '# Context Engineering Environment Variables') {
+      ceStartIndex = i;
+      break;
+    }
+  }
+  
+  if (ceStartIndex === -1) {
+    return; // No Context Engineering section found
+  }
+  
+  // Find the end of the Context Engineering section (next section or end of file)
+  for (let i = ceStartIndex + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('#') && !line.startsWith('# ') && line !== '# Context Engineering Environment Variables') {
+      ceEndIndex = i;
+      break;
+    }
+  }
+  
+  if (ceEndIndex === -1) {
+    ceEndIndex = lines.length;
+  }
+  
+  // Remove the Context Engineering section
+  const newLines = [
+    ...lines.slice(0, ceStartIndex),
+    ...lines.slice(ceEndIndex)
+  ];
+  
+  // Remove trailing empty lines at the end
+  while (newLines.length > 0 && newLines[newLines.length - 1].trim() === '') {
+    newLines.pop();
+  }
+  
+  if (newLines.length > 0) {
+    // File still has content, write it back
+    fs.writeFileSync(envExamplePath, newLines.join('\n') + '\n');
+    console.log(chalk.red(`  🧹 Cleaned Context Engineering variables from .env.example`));
+  } else {
+    // File is now empty, remove it entirely
+    fs.removeSync(envExamplePath);
+    console.log(chalk.red(`  ❌ Removed empty .env.example`));
+  }
+}
+
 function runUninstaller() {
   console.log(chalk.yellow('🧹 Context Engineering Uninstaller'));
   
   const projectDir = process.cwd();
   
-  // List of files/directories that the installer creates
+  // Specific files that the installer creates (not entire directories)
   const toolkitFiles = [
-    '.claude',
     '.github/ISSUE_TEMPLATE/feature-request.yml',
     '.github/PULL_REQUEST_TEMPLATE.md',
     'scripts/generation/generate-from-issue.js',
@@ -163,16 +217,36 @@ function runUninstaller() {
     'validate.sh',
     'advanced_tools.md',
     'AI_RULES.md',
-    'MCP_SERVERS.md',
-    '.env.example'
+    'MCP_SERVERS.md'
+  ];
+  
+  // Specific .claude files that the installer creates
+  const claudeFiles = [
+    '.claude/commands/start-task.md',
+    '.claude/commands/validate-execution.md',
+    '.claude/commands/submit-pr.md',
+    '.claude/commands/create-task.md',
+    '.claude/commands/refine-task.md',
+    '.claude/commands/execute-prp.md'
   ];
   
   console.log(chalk.blue('\n📋 Files/directories that will be removed:'));
   
   let filesToRemove = [];
   let dirsToRemove = [];
+  let envExampleNeedsCleanup = false;
   
-  // Check what exists
+  // Check .env.example for Context Engineering variables
+  const envExamplePath = path.join(projectDir, '.env.example');
+  if (fs.existsSync(envExamplePath)) {
+    const content = fs.readFileSync(envExamplePath, 'utf8');
+    if (content.includes('# Context Engineering Environment Variables')) {
+      envExampleNeedsCleanup = true;
+      console.log(chalk.white(`  📄 .env.example (Context Engineering variables only)`));
+    }
+  }
+  
+  // Check what toolkit files exist
   for (const item of toolkitFiles) {
     const itemPath = path.join(projectDir, item);
     if (fs.existsSync(itemPath)) {
@@ -187,8 +261,19 @@ function runUninstaller() {
     }
   }
   
+  // Check what .claude files exist
+  for (const item of claudeFiles) {
+    const itemPath = path.join(projectDir, item);
+    if (fs.existsSync(itemPath)) {
+      filesToRemove.push(item);
+      console.log(chalk.white(`  📄 ${item}`));
+    }
+  }
+  
   // Check for empty parent directories that might need cleanup
   const potentialEmptyDirs = [
+    '.claude/commands',
+    '.claude',
     'scripts/generation',
     'scripts/submission', 
     'scripts',
@@ -196,7 +281,7 @@ function runUninstaller() {
     '.github'
   ];
   
-  if (filesToRemove.length === 0 && dirsToRemove.length === 0) {
+  if (filesToRemove.length === 0 && dirsToRemove.length === 0 && !envExampleNeedsCleanup && !settingsNeedCleanup) {
     console.log(chalk.green('\n✅ No Context Engineering files found. Already clean!'));
     return;
   }
@@ -227,6 +312,11 @@ function runUninstaller() {
             const dirPath = path.join(projectDir, dir);
             fs.removeSync(dirPath);
             console.log(chalk.red(`  ❌ Removed: ${dir}/`));
+          }
+          
+          // Clean up .env.example selectively
+          if (envExampleNeedsCleanup) {
+            cleanupEnvExample(envExamplePath);
           }
           
           // Clean up potentially empty parent directories
