@@ -167,7 +167,7 @@ node scripts/post-issue.js temp/task-draft-{timestamp}.md
 npx context-engineering-installer
 
 # To uninstall later if needed
-npx context-engineering-uninstaller
+npx context-engineering-installer --uninstall
 ```
 
 ### 2. Configure Environment
@@ -382,7 +382,7 @@ The toolkit works with any project type:
 - Check that you have write permissions in the directory
 
 **Want to remove the toolkit?**
-- Run `npx context-engineering-uninstaller` to cleanly remove all files
+- Run `npx context-engineering-installer --uninstall` to cleanly remove all files
 - The uninstaller will show exactly what will be deleted before proceeding
 
 For more help, check the toolkit files or create an issue in the repository.

@@ -9,7 +9,7 @@ Simple installer for adding Context Engineering workflow to any existing project
 npx context-engineering-installer
 
 # To uninstall later
-npx context-engineering-uninstaller
+npx context-engineering-installer --uninstall
 ```
 
 ## ✨ What It Does
@@ -106,7 +106,7 @@ node scripts/post-issue.js temp/task-draft-{timestamp}.md
 When you want to remove the toolkit:
 
 ```bash
-npx context-engineering-uninstaller
+npx context-engineering-installer --uninstall
 ```
 
 The uninstaller will:
@@ -139,7 +139,7 @@ To update to a newer version:
 
 ```bash
 # Uninstall current version
-npx context-engineering-uninstaller
+npx context-engineering-installer --uninstall
 
 # Install latest version  
 npx context-engineering-installer@latest
