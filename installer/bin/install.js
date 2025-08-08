@@ -34,10 +34,12 @@ function main() {
   // Print next steps
   console.log(chalk.yellow('\n--- ACTION REQUIRED: Configuration ---'));
   console.log('The toolkit is installed but needs to be configured for your project.');
-  console.log('\n1. ' + chalk.bold('Configure your environment:'));
+  console.log('\n1. ' + chalk.bold('Install script dependencies:'));
+  console.log('   npm install @octokit/rest@19.0.13 dotenv');
+  console.log('\n2. ' + chalk.bold('Configure your environment:'));
   console.log('   cp .env.example .env');
   console.log('   (Edit .env with your GitHub token and repository)');
-  console.log('\n2. ' + chalk.bold('Configure your validation script:'));
+  console.log('\n3. ' + chalk.bold('Configure your validation script:'));
   console.log('   (Open `validate.sh` and add your project\'s test and lint commands)');
   console.log('\n👉 Your AI assistant can help you with this! Just ask:');
   console.log(chalk.cyan('"Help me configure my `validate.sh` script for a React project."'));
@@ -212,6 +214,7 @@ function runUninstaller() {
     '.github/PULL_REQUEST_TEMPLATE.md',
     'scripts/generation/generate-from-issue.js',
     'scripts/submission/submit-pr.js',
+    'scripts/post-issue.js',
     'PRPs',
     'temp',
     'validate.sh',
