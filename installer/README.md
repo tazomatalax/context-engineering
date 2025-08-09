@@ -70,23 +70,24 @@ GITHUB_REPO=owner/repo-name
 ```
 
 ### 2. Configure Validation Script
-The installer creates a generic `validate.sh` template. **You must customize it** for your project:
+The installer creates a **smart validation script** that auto-detects your project type and runs appropriate checks:
 
 ```bash
-# For Node.js projects:
-# echo "Running linter..."
-# npx eslint .
-# echo "Running tests..." 
-# npm test
+# Test it works out of the box
+./validate.sh
 
-# For Python projects:
-# echo "Running linter..."
-# ruff check .
-# echo "Running tests..."
-# pytest
+# It automatically detects and runs:
+# - npm run lint/test (Node.js projects)
+# - ruff check, pytest (Python projects) 
+# - Git status checks (all projects)
 ```
 
-**💡 Pro tip:** Ask your AI assistant to help configure this script for your specific project type.
+**🎯 For best results, customize the script:**
+- Uncomment the examples at the bottom of `validate.sh`
+- Add your project-specific commands
+- Your AI assistant can help configure this for your needs
+
+**💡 The script is designed to be robust** - it won't fail if tools aren't installed, but will give helpful warnings.
 
 ### 3. Verify Installation
 
