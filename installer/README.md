@@ -109,7 +109,7 @@ Once configured, use the streamlined Context Engineering workflow:
 /create-task "Add dark mode toggle to settings"
 
 # 2. Edit the generated draft, then post to GitHub  
-node scripts/post-issue.js temp/task-draft-{timestamp}.md
+node scripts/post-issue.cjs temp/task-draft-{timestamp}.md
 
 # 3. Start implementation (fetches full context)
 /start-task --issue=123
@@ -178,6 +178,11 @@ Your customizations in `validate.sh` and `.env` will be preserved since the inst
 - **Commands not found**: Restart Claude Code to pick up new `.claude/commands/`
 - **GitHub errors**: Check your `GITHUB_TOKEN` and `GITHUB_REPO` in `.env`
 - **Validation fails**: Customize `validate.sh` with your project's commands
+
+### Module Compatibility
+- **Universal compatibility**: Scripts use `.cjs` extension to work in all project types
+- **No configuration needed**: Works with both CommonJS and ES module projects
+- **Reliable**: Node.js always treats `.cjs` files as CommonJS regardless of project settings
 
 ### Uninstall Issues
 - **Files not removed**: Some files may have been customized (this is intentional)

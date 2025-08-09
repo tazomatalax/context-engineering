@@ -4,12 +4,13 @@
  * Post Issue Script - Context Engineering Workflow
  * 
  * Posts a task draft file to GitHub as a new issue.
+ * Uses .cjs extension for universal compatibility (works in all project types).
  *
  * USAGE:
- *   node scripts/post-issue.js <task-draft-file>
+ *   node scripts/post-issue.cjs <task-draft-file>
  *
  * EXAMPLES:
- *   node scripts/post-issue.js temp/task-draft-20250108.md
+ *   node scripts/post-issue.cjs temp/task-draft-20250108.md
  *
  * REQUIREMENTS:
  *   - .env file with GITHUB_TOKEN and GITHUB_REPO in project root
@@ -21,6 +22,16 @@ const { Octokit } = require('@octokit/rest');
 const fs = require('fs');
 const path = require('path');
 
+// Try to load dotenv
+let dotenv;
+try {
+  dotenv = require('dotenv');
+} catch (error) {
+  console.error('❌ dotenv package not found. Installing...');
+  console.error('   Run: npm install dotenv @octokit/rest');
+  process.exit(1);
+}
+
 // Find and load .env from project root
 function findProjectRoot(startDir = process.cwd()) {
   let currentDir = startDir;
@@ -28,14 +39,14 @@ function findProjectRoot(startDir = process.cwd()) {
   while (currentDir !== path.parse(currentDir).root) {
     const envPath = path.join(currentDir, '.env');
     if (fs.existsSync(envPath)) {
-      require('dotenv').config({ path: envPath });
+      dotenv.config({ path: envPath });
       return currentDir;
     }
     currentDir = path.dirname(currentDir);
   }
   
   // Fallback: try to load from current directory
-  require('dotenv').config();
+  dotenv.config();
   return process.cwd();
 }
 
@@ -46,8 +57,8 @@ const { GITHUB_TOKEN, GITHUB_REPO } = process.env;
 // Parse command line arguments
 const args = process.argv.slice(2);
 if (args.length !== 1) {
-  console.error('❌ Usage: node scripts/post-issue.js <task-draft-file>');
-  console.error('   Example: node scripts/post-issue.js temp/task-draft-20250108.md');
+  console.error('❌ Usage: node scripts/post-issue.cjs <task-draft-file>');
+  console.error('   Example: node scripts/post-issue.cjs temp/task-draft-20250108.md');
   process.exit(1);
 }
 
