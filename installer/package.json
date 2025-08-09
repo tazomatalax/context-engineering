@@ -8,10 +8,9 @@
   },
   "scripts": {
     "test": "node test/test-installer.js",
-    "publish": "npm publish",
-    "release:patch": "npm version patch && git push && git push --tags",
-    "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags"
+    "release:patch": "npm version patch && git push origin main --follow-tags",
+    "release:minor": "npm version minor && git push origin main --follow-tags",
+    "release:major": "npm version major && git push origin main --follow-tags"
   },
   "keywords": [
     "context-engineering",

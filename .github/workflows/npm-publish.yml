@@ -5,6 +5,11 @@ on:
     branches: [ main ]
     paths: [ 'installer/**' ]  # Only trigger when installer changes
 
+# Prevent duplicate runs from npm version workflow
+concurrency:
+  group: npm-publish
+  cancel-in-progress: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
