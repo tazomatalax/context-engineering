@@ -2,6 +2,14 @@
 
 Simple installer for adding Context Engineering workflow to any existing project.
 
+Context Engineering is a discipline for providing AI coding assistants with comprehensive project context - your actual patterns, dependencies, and validation requirements - so they can implement features correctly the first time.
+
+## Prerequisites
+
+- **Claude Code CLI**: This toolkit requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) to function
+- **Node.js 16+**: For running the installation and GitHub integration scripts
+- **Git repository**: Your project should be a Git repository for full workflow benefits
+
 ## 🚀 Quick Install
 
 ```bash
@@ -79,6 +87,18 @@ The installer creates a generic `validate.sh` template. **You must customize it*
 ```
 
 **💡 Pro tip:** Ask your AI assistant to help configure this script for your specific project type.
+
+### 3. Verify Installation
+
+Confirm the installation worked:
+
+```bash
+# Check that commands are available (restart Claude Code first)
+ls .claude/commands/
+
+# Verify GitHub integration
+node scripts/generation/generate-from-issue.js --help
+```
 
 ## 🚀 Your New Workflow
 
@@ -166,3 +186,9 @@ Your customizations in `validate.sh` and `.env` will be preserved since the inst
 ## 📄 License
 
 MIT - Feel free to use in any project!
+
+## 📚 Full Documentation
+
+This installer README covers installation and basic setup. For complete workflow documentation, architecture details, and best practices, see the [main repository README](https://github.com/tazomatalax/context-engineering#readme).
+
+**System Compatibility:** Works on Windows, macOS, and Linux with Node.js 16+.

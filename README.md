@@ -1,8 +1,16 @@
 # Context Engineering Toolkit
 
-A comprehensive toolkit for Context Engineering - the discipline of engineering context for AI coding assistants so they have the information necessary to get the job done end to end.
+**The definitive solution to AI coding assistant failures.** Context Engineering transforms unreliable AI assistants into consistent, pattern-following development partners through systematic context provision.
 
 > **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
+
+[![NPM Version](https://img.shields.io/npm/v/context-engineering-installer)](https://npmjs.com/package/context-engineering-installer)
+[![GitHub Issues](https://img.shields.io/github/issues/tazomatalax/context-engineering)](https://github.com/tazomatalax/context-engineering/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**🎯 The Problem:** AI assistants hallucinate libraries, ignore patterns, break tests  
+**💡 The Solution:** Systematic context engineering with validation loops  
+**📈 The Result:** AI that follows your conventions and passes quality gates
 
 ## 🚀 Quick Start
 
@@ -66,6 +74,7 @@ Context Engineering follows a streamlined **Plan → Execute → Submit** workfl
 - [Toolkit Structure](#toolkit-structure)
 - [Best Practices](#best-practices)
 - [Advanced Features](#advanced-features)
+- [Contributing](#-contributing)
 
 ## What is Context Engineering?
 
@@ -348,11 +357,56 @@ The toolkit works with any project type:
 - **Full-stack**: Frontend + backend validation
 - **Custom**: Add your own validation commands
 
+## 🤝 Contributing
+
+Context Engineering is an evolving discipline. Your contributions help improve AI-assisted development for everyone.
+
+### Ways to Contribute
+
+- **🐛 Report Issues**: Found a workflow that doesn't work? [Create an issue](https://github.com/tazomatalax/context-engineering/issues)
+- **💡 Suggest Features**: Ideas for new commands or workflow improvements
+- **📝 Improve Documentation**: Better examples, clearer explanations, more use cases
+- **🔧 Code Contributions**: Enhance scripts, add validation patterns, improve templates
+- **🧪 Test Edge Cases**: Try the toolkit on different project types and report findings
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/tazomatalax/context-engineering.git
+cd context-engineering
+
+# Install dependencies 
+npm install
+
+# Test the installer locally
+node installer/index.js --local-test
+```
+
+### Project Structure for Contributors
+
+```
+context-engineering/
+├── installer/                    # NPM package for toolkit installation
+│   ├── templates/               # Files copied to user projects
+│   └── index.js                # Installation logic
+├── examples/                    # Reference implementations
+├── docs/                       # Additional documentation
+└── scripts/                    # Development and testing scripts
+```
+
+**🎯 Contribution Focus Areas:**
+- Validation patterns for different frameworks
+- AI command improvements and new workflow steps
+- Integration with additional development tools
+- Documentation and examples for diverse project types
+
 ## Resources
 
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - [GitHub Personal Access Tokens](https://github.com/settings/tokens)
 - [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
+- [Contributing Guidelines](CONTRIBUTING.md)
 
 ## Troubleshooting
 
@@ -385,4 +439,9 @@ The toolkit works with any project type:
 - Run `npx context-engineering-installer --uninstall` to cleanly remove all files
 - The uninstaller will show exactly what will be deleted before proceeding
 
-For more help, check the toolkit files or create an issue in the repository.
+For more help, check the toolkit files or [create an issue](https://github.com/tazomatalax/context-engineering/issues) in the repository.
+
+---
+
+**Made with ❤️ by developers who got tired of fixing AI hallucinations.**  
+*Star this repo if Context Engineering improved your AI coding experience!*
