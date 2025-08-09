@@ -212,9 +212,9 @@ function runUninstaller() {
   const toolkitFiles = [
     '.github/ISSUE_TEMPLATE/feature-request.yml',
     '.github/PULL_REQUEST_TEMPLATE.md',
-    'scripts/generation/generate-from-issue.js',
-    'scripts/submission/submit-pr.js',
-    'scripts/post-issue.js',
+    'scripts/generation/generate-from-issue.cjs',
+    'scripts/submission/submit-pr.cjs',
+    'scripts/post-issue.cjs',
     'PRPs',
     'temp',
     'validate.sh',

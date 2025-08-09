@@ -1,6 +1,6 @@
 {
   "name": "context-engineering-installer",
-  "version": "1.3.3",
+  "version": "1.3.5",
   "description": "A simple installer for the Context Engineering toolkit.",
   "main": "index.js",
   "bin": {

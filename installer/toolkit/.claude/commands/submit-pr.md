@@ -54,7 +54,7 @@ When this command is invoked, Claude will:
    - Save the generated developer notes to `temp/pr-notes.md`
    - Execute the script with the notes file path:
    ```bash
-   node scripts/submission/submit-pr.js --issue=<number> --notes-file=temp/pr-notes.md
+   node scripts/submission/submit-pr.cjs --issue=<number> --notes-file=temp/pr-notes.md
    ```
 
 5. **Script Operations**:

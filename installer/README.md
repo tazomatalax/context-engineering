@@ -45,8 +45,8 @@ The installer is a **simple delivery service** that copies toolkit files to your
 - `.github/PULL_REQUEST_TEMPLATE.md` - PR template with validation checklist
 
 ### Automation Scripts
-- `scripts/generation/generate-from-issue.js` - Fetch GitHub issues → PRPs
-- `scripts/submission/submit-pr.js` - Create PRs with developer notes
+- `scripts/generation/generate-from-issue.cjs` - Fetch GitHub issues → PRPs
+- `scripts/submission/submit-pr.cjs` - Create PRs with developer notes
 
 ### Configuration & Templates
 - `PRPs/templates/prp_base.md` - Base PRP template
