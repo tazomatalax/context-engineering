@@ -5,13 +5,14 @@
  * 
  * Automatically creates a pull request from your current work, linking it to a GitHub issue.
  * Handles git operations, push to remote, and PR creation with developer notes.
+ * Uses .cjs extension for universal compatibility (works in all project types).
  *
  * USAGE:
- *   node scripts/submission/submit-pr.js --issue=<number> [--notes-file=<path>]
+ *   node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>]
  *
  * EXAMPLES:
- *   node scripts/submission/submit-pr.js --issue=123
- *   node scripts/submission/submit-pr.js --issue=123 --notes-file=temp/pr-notes.md
+ *   node scripts/submission/submit-pr.cjs --issue=123
+ *   node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md
  *
  * REQUIREMENTS:
  *   - .env file with GITHUB_TOKEN and GITHUB_REPO in project root
@@ -402,8 +403,8 @@ async function main() {
   }
 
   if (!issueNumber || isNaN(issueNumber)) {
-    console.error('❌ Usage: node submit-pr.js --issue=<number> [--notes-file=<path>]');
-    console.error('   Example: node submit-pr.js --issue=123 --notes-file=temp/pr-notes.md');
+    console.error('❌ Usage: node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>]');
+    console.error('   Example: node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md');
     process.exit(1);
   }
 
