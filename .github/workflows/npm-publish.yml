@@ -1,0 +1,64 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'installer/**' ]  # Only trigger when installer changes
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          
+      - name: Install dependencies
+        run: |
+          cd installer
+          npm ci
+          
+      - name: Check if version changed
+        id: version-check
+        run: |
+          cd installer
+          CURRENT_VERSION=$(npm view context-engineering-installer version || echo "0.0.0")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "package=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed: $CURRENT_VERSION -> $PACKAGE_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $PACKAGE_VERSION"
+          fi
+          
+      - name: Publish to NPM
+        if: steps.version-check.outputs.changed == 'true'
+        run: |
+          cd installer
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create GitHub Release
+        if: steps.version-check.outputs.changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version-check.outputs.package }}
+          release_name: Release v${{ steps.version-check.outputs.package }}
+          body: |
+            ## Changes
+            Auto-generated release for NPM publish.
+            
+            **NPM Package:** [context-engineering-installer@${{ steps.version-check.outputs.package }}](https://npmjs.com/package/context-engineering-installer)
+          draft: false
+          prerelease: false
