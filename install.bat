@@ -20,12 +20,19 @@ echo %BLUE%  ╭─────────────────────�
 echo %BLUE%  │   Context Engineering Universal Setup   │%NC%
 echo %BLUE%  ╰─────────────────────────────────────────╯%NC%
 
-REM Check if we're in a git repository
-if not exist ".git" (
-    echo %RED%❌ This directory is not a git repository. Please run from your project root.%NC%
-    echo Initialize git first: git init
+REM Detect parent directory as project root
+for %%i in ("%CD%\..") do set "PROJECT_ROOT=%%~fi"
+
+REM Check if parent directory is a git repository
+if not exist "%PROJECT_ROOT%\.git" (
+    echo %RED%❌ Parent directory '%PROJECT_ROOT%' is not a git repository.%NC%
+    echo Please run this script from within a cloned context-engineering repo inside your project.
+    echo Or initialize git in your project: cd "%PROJECT_ROOT%" && git init
     exit /b 1
 )
+
+echo %BLUE%🚀 Installing in: %PROJECT_ROOT%%NC%
+cd /d "%PROJECT_ROOT%"
 
 echo %BLUE%🚀 Installing Context Engineering files...%NC%
 

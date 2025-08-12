@@ -26,18 +26,23 @@ success() { echo -e "${GREEN}✅ $1${NC}"; }
 warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 error() { echo -e "${RED}❌ $1${NC}"; }
 
-# Check if we're in a git repository
+# Check if parent directory is a git repository
 check_git_repo() {
-    if [ ! -d ".git" ]; then
-        error "This directory is not a git repository. Please run from your project root."
-        echo "Initialize git first: git init"
+    local project_root="$1"
+    if [ ! -d "$project_root/.git" ]; then
+        error "Parent directory '$project_root' is not a git repository."
+        echo "Please run this script from within a cloned context-engineering repo inside your project."
+        echo "Or initialize git in your project: cd '$project_root' && git init"
         exit 1
     fi
 }
 
-# Detect project root (where .git is)
+# Detect project root (always parent directory since script runs from cloned repo)
 detect_project_root() {
-    local current_dir="$PWD"
+    local parent_dir="$(dirname "$PWD")"
+    
+    # Look for .git in parent and up from there
+    local current_dir="$parent_dir"
     while [[ "$current_dir" != "/" ]]; do
         if [[ -d "$current_dir/.git" ]]; then
             echo "$current_dir"
@@ -45,7 +50,9 @@ detect_project_root() {
         fi
         current_dir="$(dirname "$current_dir")"
     done
-    echo "$PWD"
+    
+    # Fallback to parent directory if no .git found
+    echo "$parent_dir"
 }
 
 # Download file from GitHub if not running locally
@@ -152,11 +159,11 @@ main() {
     echo -e "${NC}"
     
     PROJECT_ROOT=$(detect_project_root)
-    cd "$PROJECT_ROOT"
     
     info "Installing in: $PROJECT_ROOT"
     
-    check_git_repo
+    check_git_repo "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT"
     create_directories
     install_files
     download_validation_script
