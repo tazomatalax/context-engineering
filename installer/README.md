@@ -7,11 +7,17 @@ Context Engineering is a discipline for providing AI coding assistants with comp
 ## Prerequisites
 
 - **Claude Code CLI**: This toolkit requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) to function
-- **Node.js 16+**: For running the installation and GitHub integration scripts
 - **Git repository**: Your project should be a Git repository for full workflow benefits
+- **Node.js 16+**: Only required for NPX installation method and GitHub integration scripts
 
 ## 🚀 Quick Install
 
+**Option 1: Universal Installer (Recommended - No Node.js required)**
+```bash
+curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
+```
+
+**Option 2: NPX Installer (Node.js required)**
 ```bash
 # Install in any existing project directory
 npx context-engineering-installer
@@ -19,6 +25,8 @@ npx context-engineering-installer
 # To uninstall later
 npx context-engineering-installer --uninstall
 ```
+
+> 💡 **New!** The universal installer works without Node.js and is more reliable across platforms. The NPX method is still fully supported for Node.js users.
 
 ## ✨ What It Does
 

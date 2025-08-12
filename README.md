@@ -16,13 +16,30 @@
 
 ### 1. Install the Toolkit
 
+**Option A: Universal Installation (No Node.js required)**
+```bash
+# Navigate to your existing project
+cd your-existing-project
+
+# Install using universal script
+curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
+
+# OR clone and run locally:
+git clone https://github.com/tazomatalax/context-engineering.git
+cd context-engineering && ./install.sh
+```
+
+**Option B: NPX Installation (Node.js required)**
 ```bash
 # Navigate to your existing project
 cd your-existing-project
 
 # Install Context Engineering toolkit
 npx context-engineering-installer
+```
 
+**Both methods then require:**
+```bash
 # Configure environment
 cp .env.example .env
 # Edit .env with your GitHub credentials
@@ -171,6 +188,25 @@ node scripts/post-issue.js temp/task-draft-{timestamp}.md
 
 ### 1. Install the Toolkit
 
+**Method 1: Universal Installer (Recommended - No Node.js required)**
+
+```bash
+# Navigate to your project directory
+cd your-existing-project
+
+# Install via curl (Linux/macOS/WSL)
+curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
+
+# OR clone and install locally (works everywhere)
+git clone https://github.com/tazomatalax/context-engineering.git
+cd context-engineering && ./install.sh
+
+# Windows users: Use install.bat instead
+install.bat
+```
+
+**Method 2: NPX Installer (Node.js required)**
+
 ```bash
 # In your existing project directory
 npx context-engineering-installer
@@ -178,6 +214,12 @@ npx context-engineering-installer
 # To uninstall later if needed
 npx context-engineering-installer --uninstall
 ```
+
+**Why Universal Installer?**
+- ✅ Works without Node.js/npm installed
+- ✅ More reliable on different platforms
+- ✅ Uses shell scripts instead of Node.js dependencies
+- ✅ Simpler error handling and debugging
 
 ### 2. Configure Environment
 
@@ -432,12 +474,20 @@ context-engineering/
 - Use `--notes-file=temp/pr-notes.md` for custom developer notes
 
 **Installation fails**
-- Ensure you're in a project directory (not empty folder)
+- Ensure you're in a project directory (not empty folder)  
 - Check that you have write permissions in the directory
+- For universal installer: ensure `curl` or `wget` is installed
+- For Windows: ensure PowerShell execution policy allows downloads
 
 **Want to remove the toolkit?**
-- Run `npx context-engineering-installer --uninstall` to cleanly remove all files
+- NPX method: `npx context-engineering-installer --uninstall`
+- Universal method: Remove files manually using the file list from installation output
 - The uninstaller will show exactly what will be deleted before proceeding
+
+**Scripts not working?**
+- Universal installer creates platform-specific validation scripts (`validate.sh` for Unix, `validate.bat` for Windows)
+- Scripts auto-detect project types and use appropriate tools
+- All dependencies are clearly listed and validated before running
 
 For more help, check the toolkit files or [create an issue](https://github.com/tazomatalax/context-engineering/issues) in the repository.
 

@@ -45,6 +45,8 @@ function main() {
   console.log(chalk.cyan('"Help me configure my `validate.sh` script for a React project."'));
   console.log(chalk.green('\n🎉 Installation complete!'));
   console.log(chalk.gray('\nTo uninstall: npx context-engineering-installer --uninstall'));
+  console.log(chalk.blue('\n💡 Alternative: Use our universal installer (no Node.js required):'));
+  console.log(chalk.gray('   curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash'));
 }
 
 function installToolkit(sourceDir, destDir) {
