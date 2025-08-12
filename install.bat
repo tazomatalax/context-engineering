@@ -79,6 +79,11 @@ call :copy_file ".github\PULL_REQUEST_TEMPLATE.md" ".github\PULL_REQUEST_TEMPLAT
 REM Install PRP templates
 call :copy_file "PRPs\templates\prp_base.md" "PRPs\templates\prp_base.md"
 
+REM Install scripts
+call :copy_file "scripts\generation\generate-from-issue.cjs" "scripts\generation\generate-from-issue.cjs"
+call :copy_file "scripts\post-issue.cjs" "scripts\post-issue.cjs"
+call :copy_file "scripts\submission\submit-pr.cjs" "scripts\submission\submit-pr.cjs"
+
 REM Install documentation
 call :copy_file "AI_RULES.md" "AI_RULES.md"
 call :copy_file "advanced_tools.md" "advanced_tools.md"

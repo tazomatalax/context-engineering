@@ -112,6 +112,11 @@ install_files() {
     # PRP templates
     download_file "PRPs/templates/prp_base.md" "PRPs/templates/prp_base.md"
     
+    # Scripts
+    download_file "scripts/generation/generate-from-issue.cjs" "scripts/generation/generate-from-issue.cjs"
+    download_file "scripts/post-issue.cjs" "scripts/post-issue.cjs"
+    download_file "scripts/submission/submit-pr.cjs" "scripts/submission/submit-pr.cjs"
+    
     # Documentation
     download_file "AI_RULES.md" "AI_RULES.md"
     download_file "advanced_tools.md" "advanced_tools.md"
