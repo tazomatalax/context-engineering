@@ -48,18 +48,29 @@ This project is ready for advanced AI tooling. You can enable these features at 
 
 ---
 
-### 🚀 Power-Up 5: Supabase Integration
-**Use Case:** Complete Supabase integration for database operations, authentication, and real-time features.
-**Setup:**
-1.  Add your Supabase credentials to your `.env` file:
+### 🚀 Power-Up 5: Supabase MCP Integration  
+**Use Case:** Seamlessly connect Claude Code to your Supabase project for database queries, authentication, and real-time operations via the Model Context Protocol (MCP).  
+
+**Setup:**  
+1. **Add your Supabase credentials** to your `.env` file:  
+    ```env
+    SUPABASE_ACCESS_TOKEN=your_personal_access_token   # from Supabase dashboard
+    SUPABASE_PROJECT_REF=your_project_ref              # e.g. abcd1234
     ```
-    SUPABASE_URL=your_supabase_project_url
-    SUPABASE_ANON_KEY=your_supabase_anon_key
-    ```
-2.  Run this command once:
+    *You can create a Personal Access Token (PAT) in your Supabase **Account Settings → Access Tokens** section.*  
+
+2. **Add the Supabase MCP server** to Claude Code:  
     ```bash
-    env SUPABASE_URL="$SUPABASE_URL" SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" claude mcp add supabase npx "-y" "@supabase/mcp-server-supabase"
+    env SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" \
+        claude mcp add supabase -s local \
+        -- npx -y @supabase/mcp-server-supabase@latest --read-only --project-ref="$SUPABASE_PROJECT_REF"
     ```
+
+3. **Restart Claude Code** – the Supabase MCP server will now be available in your workspace. Look for the MCP (hammer) icon to run Supabase commands directly via Claude Code.  
+
+💡 *Tip: Use `--read-only` for safe, query-only access, or remove it for full read/write capabilities.*  
+
+
 
 ---
 
