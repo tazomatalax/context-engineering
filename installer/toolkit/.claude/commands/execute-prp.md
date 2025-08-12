@@ -1,46 +1,124 @@
-# Execute BASE PRP
+# Execute PRP Implementation
 
-Implement a feature using using the PRP file.
+Implement a feature using the specified PRP file with systematic validation.
 
-## PRP File: $ARGUMENTS
+## Command: `/execute-prp <path-to-prp-file>`
 
-## Execution Process
+## MANDATORY EXECUTION SEQUENCE
 
-1. **Load PRP**
-   - Read the specified PRP file
-   - Understand all context and requirements
-   - Follow all instructions in the PRP and extend the research if needed
-   - Ensure you have all needed context to implement the PRP fully
-   - Do more web searches and codebase exploration as needed
+### PHASE 1: CONTEXT LOADING (Required)
+1. **Read PRP File Completely**
+   ```
+   ✅ CHECKPOINT: Can you summarize the main objective in 1 sentence?
+   ✅ CHECKPOINT: Can you list all acceptance criteria?
+   ✅ CHECKPOINT: Do you understand all technical requirements?
+   ```
 
-2. **ULTRATHINK**
-   - Think hard before you execute the plan. Create a comprehensive plan addressing all requirements.
-   - Break down complex tasks into smaller, manageable steps using your todos tools.
-   - Use the TodoWrite tool to create and track your implementation plan.
-   - Identify implementation patterns from existing code to follow.
+2. **Validate Prerequisites**
+   - Check if `.env` exists and has required variables
+   - Verify `validate.sh` is executable
+   - Confirm all referenced files/directories exist
+   ```
+   ❌ IF ANY MISSING: Stop and request user to configure prerequisites
+   ✅ IF ALL PRESENT: Continue to Phase 2
+   ```
 
-3. **Execute the plan**
-   - Execute the PRP
-   - Implement all the code
+### PHASE 2: IMPLEMENTATION PLANNING (Required)
+3. **Create Implementation Plan Using TodoWrite**
+   - Break PRP into specific, testable tasks (max 10 items)
+   - Each task must have clear completion criteria
+   - Include validation steps for each major component
+   ```
+   EXAMPLE GOOD TASK: "Create user login form with email/password fields and submit button"
+   EXAMPLE BAD TASK: "Implement authentication system"
+   ```
 
-4. **Validate**
-   - Run each validation command
-   - Fix any failures
-   - Re-run until all pass
+4. **Identify Implementation Patterns**
+   - Search codebase for similar existing features
+   - Note file structure patterns to follow
+   - Identify imports/dependencies to use
+   ```
+   ✅ CHECKPOINT: Have you found at least 2 similar code patterns to follow?
+   ```
 
-5. **CRITICAL: Final Validation**
-   - **MUST RUN**: Execute `./validate.sh` as the final step
-   - The PRP is NOT considered complete until this script passes
-   - Fix any failures reported by the validation script
-   - Re-run `./validate.sh` until it exits with success (exit code 0)
+### PHASE 3: STEP-BY-STEP IMPLEMENTATION (Required)
+5. **Execute Each Todo Item**
+   - Mark todo as `in_progress` before starting
+   - Implement the specific functionality
+   - Test the implementation works
+   - Mark todo as `completed` only when working
+   ```
+   🔄 RULE: Only 1 todo can be `in_progress` at a time
+   🔄 RULE: Must test each component before marking complete
+   ```
 
-6. **Complete**
-   - Ensure all checklist items done
-   - Confirm `./validate.sh` has passed successfully
-   - Report completion status
-   - Read the PRP again to ensure you have implemented everything
+### PHASE 4: CONTINUOUS VALIDATION (Required)
+6. **After Each Major Component**
+   ```bash
+   # Run project-specific validation
+   ./validate.sh
+   
+   # IF FAILS:
+   #   - Fix the specific errors shown
+   #   - Re-run validate.sh
+   #   - Do NOT continue until passing
+   ```
 
-7. **Reference the PRP**
-   - You can always reference the PRP again if needed
+### PHASE 5: FINAL VALIDATION (CRITICAL)
+7. **Complete PRP Validation**
+   ```bash
+   # MANDATORY: Must pass before completion
+   ./validate.sh
+   ```
+   ```
+   ❌ IF VALIDATE.SH FAILS: Implementation is NOT complete
+   ✅ IF VALIDATE.SH PASSES: Continue to final check
+   ```
 
-Note: If validation fails, use error patterns in PRP to fix and retry.
+8. **PRP Completion Verification**
+   - Re-read original PRP file
+   - Verify each acceptance criteria is met
+   - Check all technical requirements implemented
+   ```
+   ✅ CHECKPOINT: Can you demonstrate each acceptance criteria works?
+   ✅ CHECKPOINT: Are all TodoWrite items marked as completed?
+   ✅ CHECKPOINT: Does `./validate.sh` pass with exit code 0?
+   ```
+
+## ERROR HANDLING DECISION TREE
+
+```
+VALIDATION FAILS?
+├── Linting Errors → Fix syntax, re-run validate.sh
+├── Test Failures → Fix failing tests, re-run validate.sh  
+├── Build Errors → Fix build issues, re-run validate.sh
+└── Type Errors → Fix type issues, re-run validate.sh
+
+IMPLEMENTATION BLOCKED?
+├── Missing Dependencies → Check PRP for required packages
+├── Unclear Requirements → Re-read PRP and ask for clarification
+├── Code Pattern Unclear → Search codebase for similar examples
+└── Technical Issue → Break down into smaller todos
+
+PRP REQUIREMENTS UNCLEAR?
+├── Acceptance Criteria Vague → Ask user to clarify specific criteria
+├── Technical Details Missing → Request additional context
+└── Conflicting Information → Ask user to resolve conflicts
+```
+
+## SUCCESS CRITERIA CHECKLIST
+
+- [ ] All TodoWrite items marked as `completed`
+- [ ] `./validate.sh` passes with exit code 0
+- [ ] Each PRP acceptance criteria demonstrably works
+- [ ] Code follows existing project patterns
+- [ ] No console errors or warnings
+- [ ] Implementation matches PRP technical requirements
+
+## FAILURE HANDLING
+
+If you cannot complete the PRP:
+1. Report exactly which acceptance criteria are blocked
+2. List specific technical obstacles encountered  
+3. Show current state of TodoWrite progress
+4. Provide specific next steps needed for completion

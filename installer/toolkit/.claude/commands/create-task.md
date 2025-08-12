@@ -1,113 +1,158 @@
-# Create Task Command
+# Create Comprehensive Task
 
-Creates a structured GitHub issue draft from a minimal prompt, following Context Engineering patterns.
+Transform a brief description into a structured, implementable GitHub issue.
 
-## Usage
+## Command: `/create-task <brief-description>`
+
+## IMPLEMENTATION PROCESS
+
+### STEP 1: ANALYZE USER INPUT
+Parse the user's description and categorize:
 
 ```
-/create-task <brief description>
+INPUT TYPE DETECTION:
+├── Feature Request → Use Feature Template
+├── Bug Fix → Use Bug Template  
+├── Refactor/Improvement → Use Enhancement Template
+└── Research/Investigation → Use Research Template
 ```
 
-## Examples
+### STEP 2: EXPAND WITH STRUCTURED TEMPLATE
 
-- `/create-task Add dark mode to settings`
-- `/create-task Implement user authentication with OAuth`
-- `/create-task Create automated backup system`
+Create file: `temp/task-draft-{YYYYMMDD-HHMMSS}.md`
 
-## What it does
-
-1. Takes your brief description and expands it into a structured issue template
-2. Creates a temporary `.md` file in `temp/` directory for you to edit
-3. Provides guidance on how to post it to GitHub when ready
-
-## Implementation
-
-You are Context Engineering assistant helping create structured GitHub issues for optimal AI implementation.
-
-When user runs `/create-task <description>`, follow these steps:
-
-### Step 1: Create Structured Issue Draft
-
-Create a temporary markdown file at `temp/task-draft-{timestamp}.md` with this structure:
+**Use this EXACT template structure:**
 
 ```markdown
-# 🚀 Feature Request: {TITLE}
+# 🚀 {CATEGORY}: {EXPANDED_TITLE}
 
 ## 🎯 Objective
 
-{Expand the user's brief description into a comprehensive problem statement. Explain what problem this solves and why it's valuable.}
+{2-3 sentences expanding the user's brief description into a clear problem statement}
 
 ## ✅ Acceptance Criteria
 
-{Generate specific, testable requirements as markdown checklists. Think about edge cases, error handling, and user experience.}
+{EXACTLY 3-7 specific, testable criteria using this format:}
+- [ ] {Specific action/result that can be verified}
+- [ ] {Include error handling scenarios}
+- [ ] {Include success scenarios}
+- [ ] {Include edge cases if applicable}
 
-## 📚 Examples
+## 🔍 Implementation Approach
 
-{List and explain relevant examples from the `examples/` folder that should be referenced during implementation. Include patterns to follow and how they apply to this feature.}
+### Files Likely Needing Changes:
+{List 2-4 specific files based on project structure}
 
-## 📖 Documentation
+### Patterns to Follow:
+{Reference 1-2 existing code patterns from the codebase}
 
-{List all external documentation, APIs, libraries, and resources that will need to be referenced during development. Include URLs and specific sections.}
+### Dependencies Required:
+{List any new packages/libraries needed, or "None" if using existing}
 
-## 🛠️ Technical Context & Gotchas
+## 🧪 Testing Requirements
 
-{Based on the project structure, suggest:
+- [ ] Unit tests for core functionality
+- [ ] Integration tests for API endpoints (if applicable)  
+- [ ] Manual testing scenarios
+- [ ] Edge case validation
 
-- Relevant files that might need changes
-- Patterns to follow from existing code
-- Potential technical challenges
-- Integration points
-- Testing requirements}
+## ⚡ Complexity Assessment
 
-## ⚠️ Other Considerations
+**Estimated Complexity:** {Simple|Medium|Complex|Very Complex}
 
-{Include any additional requirements, gotchas, setup instructions, environment considerations, or specific patterns that AI assistants commonly miss in this codebase.}
+**Reasoning:** {1 sentence explaining why this complexity level}
 
-## ⚡ Priority Level
+**Estimated Implementation Time:** {1-2 hours|Half day|1-2 days|3+ days}
 
-{Suggest a priority: Critical/High/Medium/Low with brief reasoning}
+## 🚨 Potential Gotchas
 
-## 🧩 Estimated Complexity
+{List 2-3 specific technical challenges or edge cases commonly missed}
 
-{Estimate: Simple/Medium/Complex/Very Complex with reasoning}
+## 📚 References
 
-## 📎 Additional Context
-
-{Leave space for user to add screenshots, mockups, related issues, etc.}
+{Links to relevant documentation, existing similar features, or external resources}
 
 ---
 
-## Next Steps
+## 🔄 Next Steps
 
-1. Edit this file to refine requirements
-2. Run: `node scripts/post-issue.js temp/task-draft-{timestamp}.md`
-3. Use the returned issue number with: `/start-task --issue=<number>`
+1. **Review & Edit:** Modify this file to add details or corrections
+2. **Post to GitHub:** `node scripts/post-issue.cjs temp/task-draft-{timestamp}.md`
+3. **Start Implementation:** `/start-task --issue=<returned-issue-number>`
 ```
 
-### Step 2: Provide Instructions
+### STEP 3: CONTENT GENERATION RULES
 
-After creating the file, tell the user:
+**For Acceptance Criteria (CRITICAL):**
+```
+GOOD CRITERIA:
+✅ "Login form displays validation error when email field is empty"
+✅ "Dashboard loads within 2 seconds with sample data"
+✅ "API returns 400 error for invalid user ID format"
 
-1. Where the draft file is located
-2. How to edit it before posting
-3. **EXACTLY** this command to post to GitHub: `node scripts/post-issue.js temp/task-draft-{timestamp}.md`
+BAD CRITERIA:
+❌ "Login works properly"
+❌ "Dashboard is fast"
+❌ "API handles errors"
+```
 
-**IMPORTANT**: Always tell users to run `scripts/post-issue.js`, NOT `scripts/generation/generate-from-issue.js`. The generate-from-issue.js script fetches FROM GitHub, while post-issue.js posts TO GitHub.
+**For Implementation Approach:**
+1. **Files Analysis:** Look at project structure and suggest specific files
+2. **Pattern Analysis:** Search codebase for similar features and reference them
+3. **Dependency Analysis:** Check package.json/requirements.txt for existing tools
 
-### Context Engineering Principles:
+**For Complexity Assessment Decision Tree:**
+```
+COMPLEXITY DETERMINATION:
+├── Simple (1-2 hours)
+│   ├── Single file changes
+│   ├── No new dependencies
+│   └── Clear existing patterns
+├── Medium (Half day)
+│   ├── 2-4 file changes
+│   ├── Minor new functionality
+│   └── Some research needed
+├── Complex (1-2 days)
+│   ├── Multiple components
+│   ├── New integrations
+│   └── Testing complexity
+└── Very Complex (3+ days)
+    ├── System architecture changes
+    ├── Multiple new dependencies
+    └── Significant research required
+```
 
-- **Be comprehensive**: Don't just repeat their prompt, expand it
-- **Think systematically**: Consider the full implementation lifecycle
-- **Use project patterns**: Reference existing files and conventions
-- **Include gotchas**: Anticipate potential issues
-- **Make it testable**: Ensure acceptance criteria are measurable
+### STEP 4: QUALITY VALIDATION
 
-### Project-Specific Context:
+Before saving the file, verify:
+- [ ] All acceptance criteria are specific and testable
+- [ ] Implementation approach references actual project files
+- [ ] Complexity assessment has clear reasoning
+- [ ] At least 2 potential gotchas identified
+- [ ] File name uses correct timestamp format
 
-- Look at existing code patterns in the project
-- Consider the validation requirements (validate.sh)
-- Follow the modular structure principles from CLAUDE.md
-- Suggest appropriate testing strategies
-- Reference relevant examples/ directory patterns
+### STEP 5: USER GUIDANCE
 
-Remember: The goal is to create issues so comprehensive that the `/start-task` and AI implementation will be highly successful.
+After creating the file, provide EXACTLY this instruction:
+
+```
+✅ Task draft created: temp/task-draft-{timestamp}.md
+
+🔄 Next steps:
+1. Review and edit the file to add any missing details
+2. Post to GitHub: node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+3. Start implementation: /start-task --issue=<number>
+
+📝 The draft includes specific acceptance criteria and implementation guidance for optimal AI execution.
+```
+
+## EXAMPLES BY CATEGORY
+
+**Feature Request Input:** "Add dark mode toggle"
+**Generated Title:** "🚀 Feature: Add Dark Mode Toggle to Application Settings"
+
+**Bug Fix Input:** "Login button not working"  
+**Generated Title:** "🐛 Bug Fix: Login Button Click Handler Not Responding"
+
+**Enhancement Input:** "Improve dashboard loading speed"
+**Generated Title:** "⚡ Enhancement: Optimize Dashboard Loading Performance"

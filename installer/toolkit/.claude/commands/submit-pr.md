@@ -1,162 +1,230 @@
 # Submit Pull Request
 
-## Command
+Create and submit a pull request with AI-generated developer notes.
 
-`/submit-pr --issue=<issue-number>`
+## Command: `/submit-pr --issue=<issue-number>`
 
-## Description
+## MANDATORY EXECUTION SEQUENCE
 
-Automatically creates a feature branch, commits all changes, pushes to remote, and opens a Pull Request that links back to the original GitHub Issue. This command completes the Context Engineering workflow by automating the submission process.
+### PHASE 1: VALIDATION & PREPARATION (Required)
 
-## Usage
-
-- `/submit-pr --issue=123` - Submit PR for GitHub issue #123
-- The command requires a GitHub issue number as argument
-- Should only be used after successfully completing a PRP implementation
-
-## Prerequisites
-
-1. **Environment Setup**: Ensure `.env` file exists with required GitHub credentials:
-
-   ```
-   GITHUB_TOKEN=your_personal_access_token_here
-   GITHUB_REPO_OWNER=your_username
-   GITHUB_REPO_NAME=your_repository_name
-   ```
-
-2. **Git Repository**: Must be in a git repository with changes ready to commit
-
-3. **Validation Complete**: The `./validate.sh` script should have passed successfully
-
-4. **Remote Repository**: Git remote 'origin' should be configured and accessible
-
-## Execution Process
-
-When this command is invoked, Claude will:
-
-1. **Generate Developer Notes** by analyzing the git diff:
-   - Analyze all changed files using `git diff`
-   - Summarize what files were changed and why
-   - Highlight key implementation decisions
-   - Note any important considerations for reviewers
-   - Create concise, reviewer-friendly notes
-
-2. **Create Feature Branch** (if not already on one):
-   - Format: `feature/issue-{number}`
-   - Switch to the new branch
-
-3. **Commit Changes**:
-   - Stage all changes with `git add .`
-   - Create conventional commit message
-   - Commit the implementation
-
-4. **Save Developer Notes and Execute Submission Script**:
-   - Save the generated developer notes to `temp/pr-notes.md`
-   - Execute the script with the notes file path:
+1. **Validate Prerequisites**
    ```bash
-   node scripts/submission/submit-pr.cjs --issue=<number> --notes-file=temp/pr-notes.md
+   # Check these requirements:
+   ✅ .env file exists with GITHUB_TOKEN and GITHUB_REPO
+   ✅ Git repository with changes to commit
+   ✅ ./validate.sh has passed successfully  
+   ✅ scripts/submission/submit-pr.cjs exists
+   ✅ Issue number is valid
    ```
 
-5. **Script Operations**:
-   - Fetch GitHub issue details
-   - Push branch to remote with upstream tracking
-   - Create Pull Request using GitHub API
-   - Inject developer notes into PR body
-   - Link PR to original issue (auto-closes on merge)
-   - Post comment on original issue with PR link
+2. **Verify Implementation Quality**
+   ```bash
+   # MANDATORY: Final validation must pass
+   ./validate.sh
+   ```
+   ```
+   ❌ IF VALIDATE.SH FAILS: Stop and fix issues before proceeding
+   ✅ IF VALIDATE.SH PASSES: Continue to Phase 2
+   ```
 
-6. **Cleanup**: Switch back to main/master branch
+3. **Check Git Status**
+   ```bash
+   git status --porcelain
+   ```
+   ```
+   ❌ IF NO CHANGES: Error "No changes to commit"
+   ✅ IF CHANGES EXIST: Continue to developer notes generation
+   ```
 
-## Expected Output
+### PHASE 2: DEVELOPER NOTES GENERATION (Required)
 
-- A new feature branch created and pushed to remote
-- A Pull Request opened with:
-  - Title matching the issue title
-  - Body containing AI-generated Developer Notes
-  - Reference to the issue and PRP file
-  - Auto-close linking to the issue
-- A comment posted on the original issue with PR link
-- Console output with PR URL and next steps
+4. **Analyze Git Diff for Developer Notes**
+   ```bash
+   # Analyze all changes
+   git diff --name-only
+   git diff --stat
+   git diff
+   ```
 
-The AI-generated developer notes will include a section like:
+5. **Generate Comprehensive Developer Notes**
+   Create file: `temp/pr-notes-{issue-number}.md`
+   
+   **Use this EXACT template:**
+   ```markdown
+   ## 🔧 Developer Notes - Issue #{issue-number}
 
-```markdown
-## Developer Notes
-### Files Changed
-- `src/auth/login.js` - Added OAuth integration with error handling
-- `src/components/LoginForm.jsx` - Updated UI to support OAuth flow
-- `tests/auth.test.js` - Added comprehensive test coverage
+   ### 📁 Files Changed
+   {For each changed file:}
+   - `{file-path}` - {Brief description of changes and purpose}
 
-### Key Implementation Decisions
-- Used bcrypt for password hashing (industry standard)
-- Implemented rate limiting to prevent brute force attacks
-- Added session management with configurable timeout
+   ### 🎯 Key Implementation Decisions
+   {List 2-4 important technical decisions made:}
+   - {Decision with reasoning}
+   - {Architecture choice with justification}
 
-### Review Considerations  
-- OAuth credentials are properly secured in environment variables
-- All user input is validated and sanitized
-- Error messages don't leak sensitive information
+   ### 🧪 Testing Strategy
+   {Describe testing approach:}
+   - {Types of tests added/modified}
+   - {Coverage areas addressed}
+   - {Manual testing performed}
+
+   ### ⚠️ Review Considerations
+   {Highlight important areas for reviewers:}
+   - {Security considerations}
+   - {Performance implications}
+   - {Breaking changes (if any)}
+   - {Configuration requirements}
+
+   ### 🔍 Validation Completed
+   - [x] All acceptance criteria from issue #{issue-number} fulfilled
+   - [x] `./validate.sh` passes successfully
+   - [x] Code follows project patterns and conventions
+   - [x] Error handling implemented appropriately
+
+   ---
+   *Generated automatically by Context Engineering AI assistant*
+   ```
+
+### PHASE 3: GIT OPERATIONS (Required)
+
+6. **Branch Management**
+   ```bash
+   # Check current branch
+   CURRENT_BRANCH=$(git branch --show-current)
+   
+   # If on main/master, create feature branch
+   if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
+     git checkout -b "feature/issue-{issue-number}"
+   fi
+   ```
+
+7. **Commit Changes**
+   ```bash
+   # Stage all changes
+   git add .
+   
+   # Create conventional commit message
+   git commit -m "feat(issue-{issue-number}): {issue-title}
+
+   Implements: #{issue-number}
+   
+   🤖 Generated with [Claude Code](https://claude.ai/code)
+   
+   Co-Authored-By: Claude <noreply@anthropic.com>"
+   ```
+
+### PHASE 4: PULL REQUEST CREATION (Required)
+
+8. **Execute Submission Script**
+   ```bash
+   # Run the submission script with developer notes
+   node scripts/submission/submit-pr.cjs --issue={issue-number} --notes-file=temp/pr-notes-{issue-number}.md
+   ```
+
+9. **Validate Submission Success**
+   ```
+   SUBMISSION CHECKLIST:
+   ✅ Branch pushed to remote repository
+   ✅ Pull request created successfully
+   ✅ PR linked to original issue (closes #{issue-number})
+   ✅ Developer notes included in PR body
+   ✅ Comment posted on original issue with PR link
+   ```
+
+### PHASE 5: CLEANUP & CONFIRMATION (Required)
+
+10. **Post-Submission Actions**
+    ```bash
+    # Switch back to main branch
+    git checkout main
+    
+    # Provide user with PR URL and next steps
+    ```
+
+11. **Provide User Confirmation**
+    ```
+    EXACT OUTPUT FORMAT:
+    🚀 Pull Request submitted successfully!
+    
+    📋 Summary:
+    - Branch: feature/issue-{number}
+    - PR URL: {github-pr-url}
+    - Linked to: Issue #{number}
+    - Developer notes: Included
+    
+    ✅ Next steps:
+    1. Review the PR in GitHub
+    2. Address any reviewer feedback
+    3. Merge when approved (will auto-close issue)
+    ```
+
+## ERROR HANDLING MATRIX
+
+```
+PRE-SUBMISSION ERRORS:
+├── validate.sh fails → "Fix validation errors before submitting PR"
+├── No git changes → "No changes to commit - implement feature first"
+├── .env missing → "Configure .env with GITHUB_TOKEN and GITHUB_REPO"
+└── Invalid issue → "Issue #{number} does not exist or is inaccessible"
+
+GIT OPERATION ERRORS:
+├── Commit fails → "Fix git conflicts and try again"
+├── Push rejected → "Pull latest changes and resolve conflicts"
+├── Branch exists → "Switch to existing branch or use different name"
+└── Remote not configured → "Set up git remote origin"
+
+GITHUB API ERRORS:
+├── 401 Unauthorized → "Check GITHUB_TOKEN permissions"
+├── 422 Validation Failed → "PR title/body validation failed"
+├── 404 Repository Not Found → "Check GITHUB_REPO format (owner/repo)"
+└── Network Error → "Check internet connection and retry"
+
+SCRIPT EXECUTION ERRORS:
+├── Node.js script missing → "Run installer to restore missing scripts"
+├── Dependencies missing → "Run: npm install @octokit/rest dotenv"
+├── Notes file missing → "Developer notes generation failed"
+└── Permission denied → "Check file system permissions"
 ```
 
-## Error Handling
+## BRANCH NAMING CONVENTIONS
 
-The script will fail gracefully with clear error messages if:
+**Format:** `feature/issue-{number}`
+**Examples:**
+- Issue #42 → `feature/issue-42`
+- Issue #123 → `feature/issue-123`
 
-- No changes to commit (clean working directory)
-- Git repository issues or missing remote
-- GitHub API authentication failures
-- Network connectivity problems
-- Issue number doesn't exist
+## COMMIT MESSAGE CONVENTIONS
 
-## Branch Naming Convention
+**Format:** `feat(issue-{number}): {issue-title}`
+**Examples:**
+- `feat(issue-42): Add user authentication system`
+- `feat(issue-123): Fix dashboard loading performance`
 
-Branches are created using the format: `feat/{issue-number}-{sanitized-title}`
+## PULL REQUEST LINKING
 
-Example: `feat/42-user-authentication-system`
+**Auto-close Syntax:** PR description includes `Closes #{issue-number}`
+**Result:** Issue automatically closes when PR is merged
 
-## Commit Message Convention
+## SUCCESS CRITERIA CHECKLIST
 
-Commits use conventional format: `feat(issue-{number}): {title}`
+Before completion, verify:
+- [ ] All git changes committed and pushed
+- [ ] Pull request created with proper title and description
+- [ ] Developer notes included in PR body
+- [ ] PR linked to original issue for auto-close
+- [ ] Comment posted on issue with PR link
+- [ ] User provided with PR URL and next steps
+- [ ] Switched back to main branch for clean state
 
-Example: `feat(issue-42): Implement user authentication system`
-
-## Example
-
-```
-User: /submit-pr --issue=42
-Claude: 🚀 Starting PR submission for issue #42...
-        📊 Analyzing git diff to generate developer notes...
-        ✅ Generated comprehensive developer notes
-        🌿 Creating feature branch: feature/issue-42
-        💾 Committing changes...
-        📝 Running submission script with developer notes...
-        🔍 Fetching issue #42: "User Authentication System"
-        ⬆️  Pushing to remote...
-        🔄 Creating pull request with developer notes...
-        💬 Posted comment on issue #42 with PR link
-        ✅ Pull Request created successfully!
-        🔗 URL: https://github.com/user/repo/pull/15
-```
-
-## Integration with Workflow
+## INTEGRATION WITH WORKFLOW
 
 This command completes the Context Engineering workflow:
 
-1. `/start-task --issue=42` - Fetch issue context and create PRP
-2. `/execute-prp PRPs/active/42-feature.md` - Implement feature
-3. `./validate.sh` - Ensure validation passes
-4. `/submit-pr --issue=42` - Submit for review with AI-generated notes
+1. `/create-task "feature description"` → Draft comprehensive issue
+2. `node scripts/post-issue.cjs temp/task-draft-*.md` → Post to GitHub
+3. `/start-task --issue=123` → Fetch complete context  
+4. `/execute-prp PRPs/active/123-*.md` → Implement feature
+5. `/submit-pr --issue=123` → **Submit for review**
 
-Or for simple issues created manually:
-1. `/refine-task --issue=42` - Add technical implementation plan
-2. `/start-task --issue=42` - Fetch complete context
-3. `/execute-prp PRPs/active/42-feature.md` - Implement feature
-4. `./validate.sh` - Ensure validation passes
-5. `/submit-pr --issue=42` - Submit for review
-
-## Next Steps After PR Creation
-
-- Review the PR in GitHub
-- Address any feedback from reviewers
-- Merge when approved
-- Issue will auto-close on merge
+**Result:** Feature is implemented, validated, and ready for team review with AI-generated developer notes.
