@@ -54,7 +54,7 @@ Implement a feature using the specified PRP file with systematic validation.
 ### IMPLEMENTATION NOTES (MANDATORY)
 
    - Rule: Append one short Implementation Notes entry to the PRP `## 🛠️ Implementation Notes` section at these checkpoints: (A) after planning, (B) before starting each todo, (C) after completing each todo (include validation), (D) final completion.
-   - Entry must be exactly the minimal template below (replace bracketed tokens). Keep entries one paragraph (max 6 lines).
+   - Entry must be exactly the minimal template below (replace bracketed tokens). Keep entries concise: one paragraph, preferably one line (max 6 lines).
 
    Template (one-paragraph, single block):
    ```
@@ -62,6 +62,8 @@ Implement a feature using the specified PRP file with systematic validation.
    ```
 
    - Enforcement: do not mark a task `completed` unless `./validate.sh` exit is 0 or test evidence is recorded in `cmds`. If `./validate.sh` fails, append an entry with STATUS `failed` and STOP (do not continue other todos) and surface the failure excerpt to the user.
+
+   - PR Integration: The `/submit-pr` script consumes this section verbatim for the PR body. Avoid long prose or code blocks. Focus on: what changed, how validated, and next step.
 
 ### PHASE 4: CONTINUOUS VALIDATION (Required)
 6. **After Each Major Component**

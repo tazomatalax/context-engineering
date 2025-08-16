@@ -291,11 +291,15 @@ AI-powered logical review of implemented code against the plan.
 - **Output**: Detailed code review report with actionable feedback
 
 ### `/submit-pr --issue=<number>`
-Creates pull request with automated developer notes.
+Creates a pull request. By default, auto-embeds the PRP's Implementation Notes in the PR body (single source of truth, minimal tokens).
 
 - **Input**: Issue number of completed implementation
-- **Process**: Generates developer notes from git diff, creates PR, links to issue
-- **Output**: Pull request with AI-generated summary for human reviewers
+- **Process**:
+    - Extracts `## 🛠️ Implementation Notes` from the matching PRP and embeds verbatim
+    - Optionally includes additional Developer Notes via `--notes-file`
+    - Creates PR and links to issue
+- **Flags**: `--no-prp-notes`, `--collapse-prp-notes`, `--notes-file=...`
+- **Output**: Pull request containing execution notes for reviewers
 
 ## Toolkit Structure
 
@@ -356,7 +360,7 @@ your-project/
 - Implementation plans from `/refine-task` are included automatically
 
 ### 4. Review AI-Generated Developer Notes
-- `/submit-pr` generates developer notes from git diff analysis
+- `/submit-pr` auto-embeds PRP Implementation Notes; pass `--notes-file` to add curated notes
 - These notes help human reviewers understand changes quickly
 - Review and edit PR content as needed before merging
 
@@ -471,7 +475,7 @@ context-engineering/
 - Always use the exact format: `/submit-pr --issue=123`
 - Scripts work from any directory within your project
 - Environment variables are automatically detected from project root
-- Use `--notes-file=temp/pr-notes.md` for custom developer notes
+- Use `--notes-file=temp/pr-notes.md` for optional curated Developer Notes
 
 **Installation fails**
 - Ensure you're in a project directory (not empty folder)  

@@ -13,6 +13,8 @@
  * EXAMPLES:
  *   node scripts/submission/submit-pr.cjs --issue=123
  *   node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md
+ *   node scripts/submission/submit-pr.cjs --issue=123 --collapse-prp-notes
+ *   node scripts/submission/submit-pr.cjs --issue=123 --no-prp-notes
  *
  * REQUIREMENTS:
  *   - .env file with GITHUB_TOKEN and GITHUB_REPO in project root
@@ -33,13 +35,21 @@
  *   - Provides clear error messages with suggested fixes
  */
 
-const { Octokit } = require('@octokit/rest');
+let OctokitLib = null;
+let Octokit = null;
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Determine dry-run mode from CLI args as early as possible
+const IS_DRY_RUN = process.argv.some((a) => a === '--dry-run' || a === '-n');
+
 // Find and load .env from project root, regardless of current working directory
 function findAndLoadEnv() {
+  if (IS_DRY_RUN) {
+    console.log('🔧 Dry run: skipping .env load');
+    return;
+  }
   let currentDir = process.cwd();
   let envPath;
   
@@ -54,7 +64,11 @@ function findAndLoadEnv() {
   }
   
   if (envPath) {
-    require('dotenv').config({ path: envPath });
+    try {
+      require('dotenv').config({ path: envPath });
+    } catch (e) {
+      console.warn('⚠️  dotenv not installed; continuing without environment loading');
+    }
     console.log(`🔧 Loaded environment from: ${envPath}`);
   } else {
     console.warn('⚠️  No .env file found in project hierarchy');
@@ -75,14 +89,14 @@ if (GITHUB_REPO) {
 }
 
 // Validate environment variables
-if (!GITHUB_TOKEN) {
+if (!GITHUB_TOKEN && !IS_DRY_RUN) {
   console.error(
     '❌ Error: GITHUB_TOKEN is required. Please set it in your .env file.'
   );
   process.exit(1);
 }
 
-if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
+if ((!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) && !IS_DRY_RUN) {
   console.error(
     '❌ Error: GITHUB_REPO is required in format "owner/repo-name". Please set it in your .env file.'
   );
@@ -90,9 +104,17 @@ if (!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) {
 }
 
 // Initialize Octokit
-const octokit = new Octokit({
-  auth: GITHUB_TOKEN,
-});
+if (!IS_DRY_RUN) {
+  try {
+    OctokitLib = require('@octokit/rest');
+    Octokit = OctokitLib.Octokit;
+  } catch (e) {
+    console.error('❌ Missing dependency: @octokit/rest');
+    console.error('   Install with: npm i @octokit/rest');
+    process.exit(1);
+  }
+}
+const octokit = GITHUB_TOKEN && Octokit ? new Octokit({ auth: GITHUB_TOKEN }) : null;
 
 // Determine if a branch name is a feature branch per toolkit conventions
 function isFeatureBranch(branch) {
@@ -193,6 +215,9 @@ function getDefaultBranch() {
  */
 async function fetchIssue(issueNumber) {
   try {
+    if (IS_DRY_RUN || !octokit) {
+      return { title: `Issue #${issueNumber}` };
+    }
     const { data: issue } = await octokit.rest.issues.get({
       owner: GITHUB_REPO_OWNER,
       repo: GITHUB_REPO_NAME,
@@ -289,6 +314,71 @@ function findPRPFile(issueNumber) {
 }
 
 /**
+ * Returns the project root (dir containing package.json or .git)
+ */
+function getProjectRoot() {
+  let projectRoot = process.cwd();
+  while (projectRoot !== path.dirname(projectRoot)) {
+    if (
+      fs.existsSync(path.join(projectRoot, 'package.json')) ||
+      fs.existsSync(path.join(projectRoot, '.git'))
+    ) {
+      return projectRoot;
+    }
+    projectRoot = path.dirname(projectRoot);
+  }
+  return process.cwd();
+}
+
+/**
+ * Extracts the "## … Implementation Notes" section from a PRP markdown string.
+ * - Case-insensitive match for an H2 containing "Implementation Notes"
+ * - Returns the section from that header to the next H2 or EOF, trimmed
+ */
+function extractImplementationNotesFromContent(content) {
+  try {
+    const lines = content.split(/\r?\n/);
+    let start = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^##\s+.*implementation\s+notes/i.test(lines[i])) {
+        start = i;
+        break;
+      }
+    }
+    if (start === -1) return '';
+
+    let end = lines.length;
+    for (let j = start + 1; j < lines.length; j++) {
+      if (/^##\s+/.test(lines[j])) {
+        end = j;
+        break;
+      }
+    }
+    return lines.slice(start, end).join('\n').trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Reads the PRP file and extracts the Implementation Notes section.
+ * Accepts a PRP relative path like "PRPs/active/123-foo.md".
+ */
+function extractImplementationNotes(prpRelativePath) {
+  try {
+    const root = getProjectRoot();
+    const abs = path.isAbsolute(prpRelativePath)
+      ? prpRelativePath
+      : path.join(root, prpRelativePath);
+    if (!fs.existsSync(abs)) return '';
+    const md = fs.readFileSync(abs, 'utf8');
+    return extractImplementationNotesFromContent(md);
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Posts a comment on the GitHub issue
  */
 async function commentOnIssue(issueNumber, prUrl) {
@@ -326,7 +416,9 @@ async function createPullRequest(
   issue,
   prpFile,
   defaultBranch,
-  developerNotes = ''
+  developerNotes = '',
+  implementationNotes = '',
+  options = {}
 ) {
   try {
     const title = `${issue.title}`;
@@ -339,6 +431,25 @@ This pull request implements the feature requested in issue #${issueNumber}.`;
       body += `\n\n## Developer Notes\n${developerNotes.trim()}`;
     }
 
+    // Include Implementation Notes extracted from PRP (if any)
+    if (implementationNotes && implementationNotes.trim()) {
+      const collapse = options.collapseImplNotes || implementationNotes.length > 1500;
+      if (collapse) {
+        body += `
+
+<details>
+<summary><strong>Implementation Notes (from PRP)</strong></summary>
+
+${implementationNotes.trim()}
+
+</details>`;
+      } else {
+        body += `
+
+${implementationNotes.trim()}`;
+      }
+    }
+
     body += `\n\n## Related Work
 - **Implements**: Closes #${issueNumber}
 - **Guided by**: \`${prpFile || 'Manual implementation'}\`
@@ -348,6 +459,13 @@ This pull request implements the feature requested in issue #${issueNumber}.`;
 
 ---
 *This PR was created automatically via the Context Engineering workflow.*`;
+
+    if (options && options.dryRun) {
+      console.log('\n===== DRY RUN: PR BODY PREVIEW =====\n');
+      console.log(body);
+      console.log('\n===== END PREVIEW =====\n');
+      return { html_url: '(dry-run)', body };
+    }
 
     const { data: pr } = await octokit.rest.pulls.create({
       owner: GITHUB_REPO_OWNER,
@@ -393,18 +511,27 @@ async function main() {
   // Parse command line arguments - only support --issue=<number> format
   const args = process.argv.slice(2);
   let issueNumber, notesFile;
+  let noPrpNotes = false;
+  let collapsePrpNotes = false;
+  let dryRun = IS_DRY_RUN;
   
   for (const arg of args) {
     if (arg.startsWith('--issue=')) {
       issueNumber = arg.split('=')[1];
     } else if (arg.startsWith('--notes-file=')) {
       notesFile = arg.split('=')[1];
+    } else if (arg === '--no-prp-notes') {
+      noPrpNotes = true;
+    } else if (arg === '--collapse-prp-notes') {
+      collapsePrpNotes = true;
+    } else if (arg === '--dry-run' || arg === '-n') {
+      dryRun = true;
     }
   }
 
   if (!issueNumber || isNaN(issueNumber)) {
-    console.error('❌ Usage: node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>]');
-    console.error('   Example: node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md');
+    console.error('❌ Usage: node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>] [--no-prp-notes] [--collapse-prp-notes] [--dry-run|-n]');
+    console.error('   Example: node scripts/submission/submit-pr.cjs --issue=123 --collapse-prp-notes --dry-run');
     process.exit(1);
   }
 
@@ -423,38 +550,47 @@ async function main() {
 
   console.log(`🚀 Starting PR submission for issue #${issueNumber}...`);
 
-  // Check if we're in a git repository
-  try {
-    execCommand('git rev-parse --git-dir');
-  } catch (error) {
-    console.error('❌ Error: Not in a git repository');
-    process.exit(1);
-  }
-
-  // Check if there are any changes to commit or if we're already on a feature branch
-  try {
-    const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
-    const status = execCommand('git status --porcelain');
-    
-  if (!status && !isFeatureBranch(currentBranch)) {
-      console.error('❌ Error: No changes to commit and not on a feature branch.');
-      console.error('   Either make some changes first, or switch to your feature branch.');
+  if (!dryRun) {
+    // Check if we're in a git repository
+    try {
+      execCommand('git rev-parse --git-dir');
+    } catch (error) {
+      console.error('❌ Error: Not in a git repository');
       process.exit(1);
     }
-    
-  if (!status && isFeatureBranch(currentBranch)) {
-      console.log('ℹ️  No uncommitted changes found, but you\'re on a feature branch.');
-      console.log('   Will attempt to push existing commits and create PR.');
+  }
+
+  if (!dryRun) {
+    // Check if there are any changes to commit or if we're already on a feature branch
+    try {
+      const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
+      const status = execCommand('git status --porcelain');
+      
+      if (!status && !isFeatureBranch(currentBranch)) {
+        console.error('❌ Error: No changes to commit and not on a feature branch.');
+        console.error('   Either make some changes first, or switch to your feature branch.');
+        process.exit(1);
+      }
+      
+      if (!status && isFeatureBranch(currentBranch)) {
+        console.log('ℹ️  No uncommitted changes found, but you\'re on a feature branch.');
+        console.log('   Will attempt to push existing commits and create PR.');
+      }
+    } catch (error) {
+      console.error('❌ Error checking git status');
+      process.exit(1);
     }
-  } catch (error) {
-    console.error('❌ Error checking git status');
-    process.exit(1);
   }
 
   // Detect the default branch
-  console.log(`🔍 Detecting default branch...`);
-  const defaultBranch = getDefaultBranch();
-  console.log(`✅ Default branch: ${defaultBranch}`);
+  let defaultBranch = 'main';
+  if (!dryRun) {
+    console.log(`🔍 Detecting default branch...`);
+    defaultBranch = getDefaultBranch();
+    console.log(`✅ Default branch: ${defaultBranch}`);
+  } else {
+    console.log('🔍 Dry run: skipping default branch detection (using "main")');
+  }
 
   // Fetch issue from GitHub
   console.log(`🔍 Fetching issue #${issueNumber}...`);
@@ -477,36 +613,51 @@ async function main() {
   }
 
   // Git operations - handle both new changes and existing feature branch
-  const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
-  const status = execCommand('git status --porcelain');
-  
-  if (isFeatureBranch(currentBranch) && !status) {
-    // Already on feature branch with no uncommitted changes
-    console.log(`ℹ️  Using existing feature branch: ${currentBranch}`);
-    console.log(`⬆️  Pushing existing commits to remote...`);
-    try {
-      execCommand(`git push -u origin ${currentBranch}`);
-    } catch (error) {
-      // Branch might already be pushed, try without -u
-      execCommand(`git push origin ${currentBranch}`);
+  if (!dryRun) {
+    const currentBranch = execCommand('git rev-parse --abbrev-ref HEAD');
+    const status = execCommand('git status --porcelain');
+    
+    if (isFeatureBranch(currentBranch) && !status) {
+      // Already on feature branch with no uncommitted changes
+      console.log(`ℹ️  Using existing feature branch: ${currentBranch}`);
+      console.log(`⬆️  Pushing existing commits to remote...`);
+      try {
+        execCommand(`git push -u origin ${currentBranch}`);
+      } catch (error) {
+        // Branch might already be pushed, try without -u
+        execCommand(`git push origin ${currentBranch}`);
+      }
+      // Use the existing branch name for PR
+      branchName = currentBranch;
+    } else {
+      // Create new branch and commit changes
+      console.log(`🔄 Creating and switching to branch...`);
+      execCommand(`git checkout -b ${branchName}`);
+
+      if (status) {
+        console.log(`📦 Adding changes to staging...`);
+        execCommand('git add .');
+
+        console.log(`💾 Committing changes...`);
+        execCommand(`git commit -m "${commitMessage}"`);
+      }
+
+      console.log(`⬆️  Pushing to remote...`);
+      execCommand(`git push -u origin ${branchName}`);
     }
-    // Use the existing branch name for PR
-    branchName = currentBranch;
   } else {
-    // Create new branch and commit changes
-    console.log(`🔄 Creating and switching to branch...`);
-    execCommand(`git checkout -b ${branchName}`);
+    console.log('🔄 Dry run: skipping git branch and push operations');
+  }
 
-    if (status) {
-      console.log(`📦 Adding changes to staging...`);
-      execCommand('git add .');
-
-      console.log(`💾 Committing changes...`);
-      execCommand(`git commit -m "${commitMessage}"`);
+  // Extract Implementation Notes from PRP if applicable
+  let implementationNotes = '';
+  if (prpFile && !notesFile && !noPrpNotes) {
+    implementationNotes = extractImplementationNotes(prpFile);
+    if (implementationNotes) {
+      console.log('🧩 Injecting Implementation Notes from PRP into PR body');
+    } else {
+      console.log('ℹ️  No Implementation Notes section found in PRP');
     }
-
-    console.log(`⬆️  Pushing to remote...`);
-    execCommand(`git push -u origin ${branchName}`);
   }
 
   // Create Pull Request
@@ -517,26 +668,40 @@ async function main() {
     issue,
     prpFile,
     defaultBranch,
-    developerNotes
+    developerNotes,
+    implementationNotes,
+    { collapseImplNotes: collapsePrpNotes, dryRun: dryRun }
   );
 
-  // Comment on issue
-  await commentOnIssue(issueNumber, pr.html_url);
+  if (!dryRun) {
+    // Comment on issue
+    await commentOnIssue(issueNumber, pr.html_url);
+  } else {
+    console.log('💬 Dry run: skipping issue comment');
+  }
 
   // Success!
-  console.log(`\n🎉 Pull Request created successfully!`);
-  console.log(`🔗 URL: ${pr.html_url}`);
-  console.log(`📊 Status: Ready for review`);
+  if (!dryRun) {
+    console.log(`\n🎉 Pull Request created successfully!`);
+    console.log(`🔗 URL: ${pr.html_url}`);
+    console.log(`📊 Status: Ready for review`);
+  } else {
+    console.log(`\n🧪 Dry-run complete. PR body preview shown above.`);
+  }
 
   // Switch back to default branch
-  console.log(`🔄 Switching back to ${defaultBranch} branch...`);
-  try {
-    execCommand(`git checkout ${defaultBranch}`);
-    console.log(`✅ Switched to ${defaultBranch} branch`);
-  } catch (error) {
-    console.log(
-      `⚠️  Warning: Could not switch to ${defaultBranch} branch: ${error.message}`
-    );
+  if (!dryRun) {
+    console.log(`🔄 Switching back to ${defaultBranch} branch...`);
+    try {
+      execCommand(`git checkout ${defaultBranch}`);
+      console.log(`✅ Switched to ${defaultBranch} branch`);
+    } catch (error) {
+      console.log(
+        `⚠️  Warning: Could not switch to ${defaultBranch} branch: ${error.message}`
+      );
+    }
+  } else {
+    console.log('🔄 Dry run: skipping branch switch');
   }
 }
 
