@@ -140,7 +140,10 @@ After creating the file, provide EXACTLY this instruction:
 
 🔄 Next steps:
 1. Review and edit the file to add any missing details
-2. Post to GitHub: node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+2. Post to GitHub:
+
+!node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+
 3. Start implementation: /start-task --issue=<number>
 
 📝 The draft includes specific acceptance criteria and implementation guidance for optimal AI execution.
