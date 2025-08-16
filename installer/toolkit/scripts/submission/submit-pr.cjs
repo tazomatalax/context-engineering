@@ -13,6 +13,8 @@
  * EXAMPLES:
  *   node scripts/submission/submit-pr.cjs --issue=123
  *   node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md
+ *   node scripts/submission/submit-pr.cjs --issue=123 --collapse-prp-notes
+ *   node scripts/submission/submit-pr.cjs --issue=123 --no-prp-notes
  *
  * REQUIREMENTS:
  *   - .env file with GITHUB_TOKEN and GITHUB_REPO in project root
@@ -289,6 +291,71 @@ function findPRPFile(issueNumber) {
 }
 
 /**
+ * Returns the project root (dir containing package.json or .git)
+ */
+function getProjectRoot() {
+  let projectRoot = process.cwd();
+  while (projectRoot !== path.dirname(projectRoot)) {
+    if (
+      fs.existsSync(path.join(projectRoot, 'package.json')) ||
+      fs.existsSync(path.join(projectRoot, '.git'))
+    ) {
+      return projectRoot;
+    }
+    projectRoot = path.dirname(projectRoot);
+  }
+  return process.cwd();
+}
+
+/**
+ * Extracts the "## … Implementation Notes" section from a PRP markdown string.
+ * - Case-insensitive match for an H2 containing "Implementation Notes"
+ * - Returns the section from that header to the next H2 or EOF, trimmed
+ */
+function extractImplementationNotesFromContent(content) {
+  try {
+    const lines = content.split(/\r?\n/);
+    let start = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^##\s+.*implementation\s+notes/i.test(lines[i])) {
+        start = i;
+        break;
+      }
+    }
+    if (start === -1) return '';
+
+    let end = lines.length;
+    for (let j = start + 1; j < lines.length; j++) {
+      if (/^##\s+/.test(lines[j])) {
+        end = j;
+        break;
+      }
+    }
+    return lines.slice(start, end).join('\n').trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Reads the PRP file and extracts the Implementation Notes section.
+ * Accepts a PRP relative path like "PRPs/active/123-foo.md".
+ */
+function extractImplementationNotes(prpRelativePath) {
+  try {
+    const root = getProjectRoot();
+    const abs = path.isAbsolute(prpRelativePath)
+      ? prpRelativePath
+      : path.join(root, prpRelativePath);
+    if (!fs.existsSync(abs)) return '';
+    const md = fs.readFileSync(abs, 'utf8');
+    return extractImplementationNotesFromContent(md);
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Posts a comment on the GitHub issue
  */
 async function commentOnIssue(issueNumber, prUrl) {
@@ -326,7 +393,9 @@ async function createPullRequest(
   issue,
   prpFile,
   defaultBranch,
-  developerNotes = ''
+  developerNotes = '',
+  implementationNotes = '',
+  options = {}
 ) {
   try {
     const title = `${issue.title}`;
@@ -337,6 +406,25 @@ This pull request implements the feature requested in issue #${issueNumber}.`;
     // Add developer notes if provided
     if (developerNotes.trim()) {
       body += `\n\n## Developer Notes\n${developerNotes.trim()}`;
+    }
+
+    // Include Implementation Notes extracted from PRP (if any)
+    if (implementationNotes && implementationNotes.trim()) {
+      const collapse = options.collapseImplNotes || implementationNotes.length > 1500;
+      if (collapse) {
+        body += `
+
+<details>
+<summary><strong>Implementation Notes (from PRP)</strong></summary>
+
+${implementationNotes.trim()}
+
+</details>`;
+      } else {
+        body += `
+
+${implementationNotes.trim()}`;
+      }
     }
 
     body += `\n\n## Related Work
@@ -393,18 +481,24 @@ async function main() {
   // Parse command line arguments - only support --issue=<number> format
   const args = process.argv.slice(2);
   let issueNumber, notesFile;
+  let noPrpNotes = false;
+  let collapsePrpNotes = false;
   
   for (const arg of args) {
     if (arg.startsWith('--issue=')) {
       issueNumber = arg.split('=')[1];
     } else if (arg.startsWith('--notes-file=')) {
       notesFile = arg.split('=')[1];
+    } else if (arg === '--no-prp-notes') {
+      noPrpNotes = true;
+    } else if (arg === '--collapse-prp-notes') {
+      collapsePrpNotes = true;
     }
   }
 
   if (!issueNumber || isNaN(issueNumber)) {
-    console.error('❌ Usage: node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>]');
-    console.error('   Example: node scripts/submission/submit-pr.cjs --issue=123 --notes-file=temp/pr-notes.md');
+    console.error('❌ Usage: node scripts/submission/submit-pr.cjs --issue=<number> [--notes-file=<path>] [--no-prp-notes] [--collapse-prp-notes]');
+    console.error('   Example: node scripts/submission/submit-pr.cjs --issue=123 --collapse-prp-notes');
     process.exit(1);
   }
 
@@ -509,6 +603,17 @@ async function main() {
     execCommand(`git push -u origin ${branchName}`);
   }
 
+  // Extract Implementation Notes from PRP if applicable
+  let implementationNotes = '';
+  if (prpFile && !notesFile && !noPrpNotes) {
+    implementationNotes = extractImplementationNotes(prpFile);
+    if (implementationNotes) {
+      console.log('🧩 Injecting Implementation Notes from PRP into PR body');
+    } else {
+      console.log('ℹ️  No Implementation Notes section found in PRP');
+    }
+  }
+
   // Create Pull Request
   console.log(`🔄 Creating pull request...`);
   const pr = await createPullRequest(
@@ -517,7 +622,9 @@ async function main() {
     issue,
     prpFile,
     defaultBranch,
-    developerNotes
+    developerNotes,
+    implementationNotes,
+    { collapseImplNotes: collapsePrpNotes }
   );
 
   // Comment on issue

@@ -1,6 +1,6 @@
 # Submit Pull Request
 
-Create and submit a pull request with AI-generated developer notes.
+Create and submit a pull request. By default, the script embeds the PRP's Implementation Notes into the PR body to minimize token usage.
 
 ## Command: `/submit-pr --issue=<issue-number>`
 
@@ -37,54 +37,17 @@ Create and submit a pull request with AI-generated developer notes.
    ✅ IF CHANGES EXIST: Continue to developer notes generation
    ```
 
-### PHASE 2: DEVELOPER NOTES GENERATION (Required)
+### PHASE 2: NOTES HANDLING (Required)
 
-4. **Analyze Git Diff for Developer Notes**
-   ```bash
-   # Analyze all changes
-   git diff --name-only
-   git diff --stat
-   git diff
-   ```
+4. **Use PRP Implementation Notes (Default Path)**
+   - Do not generate separate notes by default. The `submit-pr.cjs` script automatically extracts the PRP section `## �️ Implementation Notes` and embeds it in the PR body.
+   - Keep your PRP Implementation Notes concise — the script consumes them verbatim.
 
-5. **Generate Comprehensive Developer Notes**
-   Create file: `temp/pr-notes-{issue-number}.md`
-   
-   **Use this EXACT template:**
-   ```markdown
-   ## 🔧 Developer Notes - Issue #{issue-number}
-
-   ### 📁 Files Changed
-   {For each changed file:}
-   - `{file-path}` - {Brief description of changes and purpose}
-
-   ### 🎯 Key Implementation Decisions
-   {List 2-4 important technical decisions made:}
-   - {Decision with reasoning}
-   - {Architecture choice with justification}
-
-   ### 🧪 Testing Strategy
-   {Describe testing approach:}
-   - {Types of tests added/modified}
-   - {Coverage areas addressed}
-   - {Manual testing performed}
-
-   ### ⚠️ Review Considerations
-   {Highlight important areas for reviewers:}
-   - {Security considerations}
-   - {Performance implications}
-   - {Breaking changes (if any)}
-   - {Configuration requirements}
-
-   ### 🔍 Validation Completed
-   - [x] All acceptance criteria from issue #{issue-number} fulfilled
-   - [x] `./validate.sh` passes successfully
-   - [x] Code follows project patterns and conventions
-   - [x] Error handling implemented appropriately
-
-   ---
-   *Generated automatically by Context Engineering AI assistant*
-   ```
+5. **Optional: Add Supplemental Developer Notes**
+   - If you want to add curated notes in addition to the PRP notes, create file: `temp/pr-notes-{issue-number}.md` and pass `--notes-file` to the script. This will appear as a separate "Developer Notes" section.
+   - Fallback/Flags:
+     - `--no-prp-notes` to skip PRP notes entirely
+     - `--collapse-prp-notes` to wrap PRP notes in a collapsible section
 
 ### PHASE 3: GIT OPERATIONS (Required)
 
@@ -118,8 +81,15 @@ Create and submit a pull request with AI-generated developer notes.
 
 8. **Execute Submission Script**
    ```bash
-   # Run the submission script with developer notes
+   # Default: auto-embeds PRP Implementation Notes
+   node scripts/submission/submit-pr.cjs --issue={issue-number}
+
+   # Optional: include curated Developer Notes
    node scripts/submission/submit-pr.cjs --issue={issue-number} --notes-file=temp/pr-notes-{issue-number}.md
+
+   # Flags:
+   #   --no-prp-notes        # do not include PRP Implementation Notes
+   #   --collapse-prp-notes  # wrap PRP notes in a collapsible section
    ```
 
 9. **Validate Submission Success**
@@ -128,7 +98,8 @@ Create and submit a pull request with AI-generated developer notes.
    ✅ Branch pushed to remote repository
    ✅ Pull request created successfully
    ✅ PR linked to original issue (closes #{issue-number})
-   ✅ Developer notes included in PR body
+   ✅ PRP Implementation Notes included in PR body (unless --no-prp-notes)
+   ✅ Developer notes (if notes-file used) included in PR body
    ✅ Comment posted on original issue with PR link
    ```
 
