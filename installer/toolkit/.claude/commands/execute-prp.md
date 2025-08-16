@@ -51,6 +51,17 @@ Implement a feature using the specified PRP file with systematic validation.
    🔄 RULE: Only 1 todo can be `in_progress` at a time
    🔄 RULE: Must test each component before marking complete
    ```
+### IMPLEMENTATION NOTES (MANDATORY)
+
+   - Rule: Append one short Implementation Notes entry to the PRP `## 🛠️ Implementation Notes` section at these checkpoints: (A) after planning, (B) before starting each todo, (C) after completing each todo (include validation), (D) final completion.
+   - Entry must be exactly the minimal template below (replace bracketed tokens). Keep entries one paragraph (max 6 lines).
+
+   Template (one-paragraph, single block):
+   ```
+   [TIMESTAMP] | [TASK] | [STATUS: pending|in_progress|completed] | files: file1,file2 | cmds: "./validate.sh:EXIT" "pnpm -w vitest:RESULT" | note: short next-step or failure-reason
+   ```
+
+   - Enforcement: do not mark a task `completed` unless `./validate.sh` exit is 0 or test evidence is recorded in `cmds`. If `./validate.sh` fails, append an entry with STATUS `failed` and STOP (do not continue other todos) and surface the failure excerpt to the user.
 
 ### PHASE 4: CONTINUOUS VALIDATION (Required)
 6. **After Each Major Component**
