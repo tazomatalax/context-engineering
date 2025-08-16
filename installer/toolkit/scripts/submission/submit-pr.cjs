@@ -35,7 +35,8 @@
  *   - Provides clear error messages with suggested fixes
  */
 
-const { Octokit } = require('@octokit/rest');
+let OctokitLib = null;
+let Octokit = null;
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -45,6 +46,10 @@ const IS_DRY_RUN = process.argv.some((a) => a === '--dry-run' || a === '-n');
 
 // Find and load .env from project root, regardless of current working directory
 function findAndLoadEnv() {
+  if (IS_DRY_RUN) {
+    console.log('🔧 Dry run: skipping .env load');
+    return;
+  }
   let currentDir = process.cwd();
   let envPath;
   
@@ -59,7 +64,11 @@ function findAndLoadEnv() {
   }
   
   if (envPath) {
-    require('dotenv').config({ path: envPath });
+    try {
+      require('dotenv').config({ path: envPath });
+    } catch (e) {
+      console.warn('⚠️  dotenv not installed; continuing without environment loading');
+    }
     console.log(`🔧 Loaded environment from: ${envPath}`);
   } else {
     console.warn('⚠️  No .env file found in project hierarchy');
@@ -95,7 +104,17 @@ if ((!GITHUB_REPO_OWNER || !GITHUB_REPO_NAME) && !IS_DRY_RUN) {
 }
 
 // Initialize Octokit
-const octokit = GITHUB_TOKEN ? new Octokit({ auth: GITHUB_TOKEN }) : null;
+if (!IS_DRY_RUN) {
+  try {
+    OctokitLib = require('@octokit/rest');
+    Octokit = OctokitLib.Octokit;
+  } catch (e) {
+    console.error('❌ Missing dependency: @octokit/rest');
+    console.error('   Install with: npm i @octokit/rest');
+    process.exit(1);
+  }
+}
+const octokit = GITHUB_TOKEN && Octokit ? new Octokit({ auth: GITHUB_TOKEN }) : null;
 
 // Determine if a branch name is a feature branch per toolkit conventions
 function isFeatureBranch(branch) {
