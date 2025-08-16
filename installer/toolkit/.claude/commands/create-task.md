@@ -142,7 +142,7 @@ After creating the file, provide EXACTLY this instruction:
 1. Review and edit the file to add any missing details
 2. Post to GitHub:
 
-!node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+! node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
 
 3. Start implementation: /start-task --issue=<number>
 
