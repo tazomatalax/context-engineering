@@ -18,6 +18,10 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write  # Required to create releases, tags, and push commits
+  packages: read   # Required to read packages
+
 jobs:
   release:
     runs-on: ubuntu-latest

@@ -10,6 +10,10 @@ concurrency:
   group: npm-publish
   cancel-in-progress: true
 
+permissions:
+  contents: write  # Required to create releases and tags
+  packages: read   # Required to read packages
+
 jobs:
   publish:
     runs-on: ubuntu-latest
