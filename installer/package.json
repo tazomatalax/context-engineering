@@ -8,10 +8,6 @@
   },
   "scripts": {
     "test": "node test/test-installer.js",
-    "release:patch": "npm version patch && git push origin main --follow-tags",
-    "release:minor": "npm version minor && git push origin main --follow-tags",
-    "release:major": "npm version major && git push origin main --follow-tags",
-    "version": "echo 'Version updated to' $(node -p \"require('./package.json').version\")",
     "prepack": "echo 'Preparing package for publishing...'",
     "postpack": "echo 'Package prepared successfully'"
   },

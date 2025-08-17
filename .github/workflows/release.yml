@@ -1,4 +1,13 @@
-name: Manual Release
+name: "[DEPRECATED] Manual Release Workflow
+
+# This workflow is deprecated. 
+# Use manual GitHub releases instead - they will automatically trigger npm publishing.
+# 
+# New workflow:
+# 1. Create release manually in GitHub with version tag (e.g., v1.5.0)
+# 2. NPM publish happens automatically via the 'Publish to NPM' workflow
+
+name: "[DEPRECATED] Release Context Engineering Toolkit"
 
 on:
   workflow_dispatch:
@@ -6,14 +15,19 @@ on:
       version_type:
         description: 'Version bump type'
         required: true
-        default: 'patch'
+        default: 'minor'
         type: choice
         options:
-          - patch
-          - minor
-          - major
+          - patch   # Bug fixes, small improvements
+          - minor   # New features, workflow enhancements  
+          - major   # Breaking changes, major redesigns
+      release_description:
+        description: 'Brief description of main changes'
+        required: true
+        default: 'Toolkit improvements and enhancements'
+        type: string
       prerelease:
-        description: 'Create as prerelease'
+        description: 'Create as prerelease (beta)'
         required: false
         default: false
         type: boolean
@@ -69,66 +83,58 @@ jobs:
           git push origin main
           git push origin "v$NEW_VERSION"
           
-      - name: Generate detailed changelog
+      - name: Generate toolkit-focused changelog
         id: changelog
         run: |
-          cd installer
           # Get commits since last tag (excluding the version bump commit)
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
           if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" --no-merges HEAD~1)
+            COMMITS=$(git log --oneline --pretty=format:"%s (%h)" --no-merges HEAD~1)
           else
-            COMMITS=$(git log ${LAST_TAG}..HEAD~1 --oneline --pretty=format:"- %s (%h)" --no-merges)
+            COMMITS=$(git log ${LAST_TAG}..HEAD~1 --oneline --pretty=format:"%s (%h)" --no-merges)
           fi
           
-          # Generate changelog with categories
+          # Get toolkit-specific changes
+          TOOLKIT_CHANGES=$(git log ${LAST_TAG}..HEAD~1 --oneline --pretty=format:"%s (%h)" --no-merges -- installer/toolkit/ examples/ || echo "")
+          
+          # Generate toolkit-focused changelog
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "## What's Changed in v${{ steps.version.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "# 🚀 Context Engineering Toolkit v${{ steps.version.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "## 📋 What's New" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "${{ github.event.inputs.release_description }}" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           
-          if [ -n "$COMMITS" ]; then
-            # Categorize commits
-            echo "$COMMITS" | grep -E "^- (feat|feature)" | head -10 > /tmp/features || true
-            echo "$COMMITS" | grep -E "^- (fix|bug)" | head -10 > /tmp/fixes || true
-            echo "$COMMITS" | grep -E "^- (docs|doc)" | head -10 > /tmp/docs || true
-            echo "$COMMITS" | grep -E "^- (chore|refactor|style|test)" | head -10 > /tmp/chores || true
-            echo "$COMMITS" | grep -vE "^- (feat|feature|fix|bug|docs|doc|chore|refactor|style|test)" | head -10 > /tmp/other || true
-            
-            if [ -s /tmp/features ]; then
-              echo "### ✨ New Features" >> $GITHUB_OUTPUT
-              cat /tmp/features >> $GITHUB_OUTPUT
-              echo "" >> $GITHUB_OUTPUT
-            fi
-            
-            if [ -s /tmp/fixes ]; then
-              echo "### 🐛 Bug Fixes" >> $GITHUB_OUTPUT
-              cat /tmp/fixes >> $GITHUB_OUTPUT
-              echo "" >> $GITHUB_OUTPUT
-            fi
-            
-            if [ -s /tmp/docs ]; then
-              echo "### 📚 Documentation" >> $GITHUB_OUTPUT
-              cat /tmp/docs >> $GITHUB_OUTPUT
-              echo "" >> $GITHUB_OUTPUT
-            fi
-            
-            if [ -s /tmp/other ]; then
-              echo "### 🔧 Other Changes" >> $GITHUB_OUTPUT
-              cat /tmp/other >> $GITHUB_OUTPUT
-              echo "" >> $GITHUB_OUTPUT
-            fi
-            
-            if [ -s /tmp/chores ]; then
-              echo "### 🏠 Maintenance" >> $GITHUB_OUTPUT
-              cat /tmp/chores >> $GITHUB_OUTPUT
-              echo "" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "### 🔧 Updates" >> $GITHUB_OUTPUT
-            echo "- Package updates and improvements" >> $GITHUB_OUTPUT
+          if [ -n "$TOOLKIT_CHANGES" ]; then
+            echo "## 🛠️ Toolkit Changes" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "$TOOLKIT_CHANGES" | while read line; do
+              if [[ "$line" =~ ^.*feat.*$ ]] || [[ "$line" =~ ^.*add.*$ ]]; then
+                echo "- ✨ $line" >> $GITHUB_OUTPUT
+              elif [[ "$line" =~ ^.*fix.*$ ]] || [[ "$line" =~ ^.*bug.*$ ]]; then
+                echo "- 🐛 $line" >> $GITHUB_OUTPUT
+              elif [[ "$line" =~ ^.*docs.*$ ]] || [[ "$line" =~ ^.*doc.*$ ]]; then
+                echo "- 📚 $line" >> $GITHUB_OUTPUT
+              elif [[ "$line" =~ ^.*command.*$ ]] || [[ "$line" =~ ^.*workflow.*$ ]]; then
+                echo "- ⚡ $line" >> $GITHUB_OUTPUT
+              else
+                echo "- 🔧 $line" >> $GITHUB_OUTPUT
+              fi
+            done
             echo "" >> $GITHUB_OUTPUT
           fi
           
+          echo "## 📦 Installation" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "\`\`\`bash" >> $GITHUB_OUTPUT
+          echo "# Universal installer (recommended)" >> $GITHUB_OUTPUT
+          echo "curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "# Or via NPX" >> $GITHUB_OUTPUT
+          echo "npx context-engineering-installer@${{ steps.version.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
           echo "---" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.old_version }}...v${{ steps.version.outputs.new_version }}" >> $GITHUB_OUTPUT

@@ -1,9 +1,8 @@
 name: Publish to NPM
 
 on:
-  push:
-    branches: [ main ]
-    paths: [ 'installer/**' ]  # Only trigger when installer changes
+  release:
+    types: [published]  # Trigger when you manually create a GitHub release
 
 # Prevent duplicate runs from npm version workflow
 concurrency:
@@ -32,21 +31,22 @@ jobs:
           cd installer
           npm ci
           
-      - name: Check if version changed
+      - name: Extract version from release tag
         id: version-check
         run: |
           cd installer
+          # Extract version from GitHub release tag (e.g., v1.4.3 -> 1.4.3)
+          RELEASE_VERSION="${{ github.event.release.tag_name }}"
+          NEW_VERSION=${RELEASE_VERSION#v}  # Remove 'v' prefix
+          
           CURRENT_VERSION=$(npm view context-engineering-installer version || echo "0.0.0")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "package=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
-          if [ "$CURRENT_VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Version changed: $CURRENT_VERSION -> $PACKAGE_VERSION"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "Version unchanged: $PACKAGE_VERSION"
-          fi
+          echo "package=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "changed=true" >> $GITHUB_OUTPUT  # Always publish on release
+          echo "Publishing release $RELEASE_VERSION as npm version $NEW_VERSION"
+          
+          # Update package.json to match release tag
+          npm version $NEW_VERSION --no-git-tag-version
           
       - name: Publish to NPM
         if: steps.version-check.outputs.changed == 'true'
