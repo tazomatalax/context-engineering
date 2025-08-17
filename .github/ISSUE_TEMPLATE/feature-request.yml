@@ -1,0 +1,65 @@
+name: Feature Request
+description: Propose a new feature with structured context for PRP generation.
+title: '[FEAT]: '
+labels: ['feature-request']
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: '🎯 Objective'
+      description: 'What is the primary goal of this feature? What user problem does it solve?'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: '✅ Acceptance Criteria'
+      description: 'List the specific, testable criteria for success. Use markdown checklists.'
+      render: markdown
+      placeholder: |
+        - [ ] Criterion 1...
+        - [ ] Criterion 2...
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: '📚 Examples'
+      description: 'List relevant examples from the `examples/` folder that should be referenced.'
+      placeholder: |
+        - `examples/cli.py` - use this as a template to create the CLI
+        - `examples/agent/` - read through all files for best practices
+    validations:
+      required: false
+  - type: textarea
+    id: documentation
+    attributes:
+      label: '📖 Documentation'
+      description: 'List all external documentation, APIs, libraries, and resources needed.'
+      placeholder: |
+        - Pydantic AI documentation: https://ai.pydantic.dev/
+        - FastAPI docs: https://fastapi.tiangolo.com/
+    validations:
+      required: false
+  - type: textarea
+    id: technical-context
+    attributes:
+      label: '🛠️ Technical Context & Gotchas'
+      description: 'List relevant files, docs, API endpoints, and known pitfalls.'
+      placeholder: |
+        - Relevant Files: `src/utils/auth.js`
+        - Docs: [Link to Stripe API Docs](...)
+        - Gotcha: Remember to handle API rate limits.
+    validations:
+      required: true
+  - type: textarea
+    id: other-considerations
+    attributes:
+      label: '⚠️ Other Considerations'
+      description: 'Additional requirements, gotchas, setup instructions, or patterns AI assistants commonly miss.'
+      placeholder: |
+        - Include a .env.example and README with setup instructions
+        - Use python_dotenv and load_env() for environment variables
+        - Virtual environment has already been set up
+    validations:
+      required: false

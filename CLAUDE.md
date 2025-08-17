@@ -5,6 +5,23 @@
 - **Use consistent naming conventions, file structure, and architecture patterns** as demonstrated in the codebase and examples.
 - **Use venv_linux** (the virtual environment) whenever executing Python commands, including for unit tests.
 
+### 🎯 Context Engineering Toolkit - Source File Rules
+
+**CRITICAL: This project contains both SOURCE files and DEPLOYED files. Always work on SOURCE files.**
+
+- **Toolkit source files are in `installer/toolkit/`** - This is where all toolkit improvements should be made
+- **Deployed files at project root are IGNORED by git** - Never edit these, they're just test installations
+- **When improving toolkit components:**
+  - Commands: Edit `installer/toolkit/.claude/commands/`
+  - Scripts: Edit `installer/toolkit/scripts/`
+  - Templates: Edit `installer/toolkit/PRPs/templates/`
+  - Documentation: Edit `installer/toolkit/AI_RULES.md`, `installer/toolkit/advanced_tools.md`, etc.
+
+**Workflow for toolkit improvements:**
+1. Make changes to source files in `installer/toolkit/`
+2. Test by creating a release and reinstalling the package
+3. Never edit the deployed copies at project root (they're gitignored)
+
 ### 🧱 Code Structure & Modularity
 
 - **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
