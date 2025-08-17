@@ -52,18 +52,38 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
+      - name: Generate changelog
+        if: steps.version-check.outputs.changed == 'true'
+        id: changelog
+        run: |
+          cd installer
+          # Get commit messages since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --oneline --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # Save changelog to output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "## Changes in v${{ steps.version-check.outputs.package }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          if [ -n "$COMMITS" ]; then
+            echo "$COMMITS" >> $GITHUB_OUTPUT
+          else
+            echo "- Package updates and improvements" >> $GITHUB_OUTPUT
+          fi
+          echo "" >> $GITHUB_OUTPUT
+          echo "**NPM Package:** [context-engineering-installer@${{ steps.version-check.outputs.package }}](https://npmjs.com/package/context-engineering-installer)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
       - name: Create GitHub Release
         if: steps.version-check.outputs.changed == 'true'
-        uses: actions/create-release@v1
+        run: |
+          gh release create "v${{ steps.version-check.outputs.package }}" \
+            --title "Release v${{ steps.version-check.outputs.package }}" \
+            --notes "${{ steps.changelog.outputs.changelog }}" \
+            --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.version-check.outputs.package }}
-          release_name: Release v${{ steps.version-check.outputs.package }}
-          body: |
-            ## Changes
-            Auto-generated release for NPM publish.
-            
-            **NPM Package:** [context-engineering-installer@${{ steps.version-check.outputs.package }}](https://npmjs.com/package/context-engineering-installer)
-          draft: false
-          prerelease: false
