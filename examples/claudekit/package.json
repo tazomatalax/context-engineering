@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "claudekit": "^0.7.3"
+  }
+}
