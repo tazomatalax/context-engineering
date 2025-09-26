@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Toolkit-centric GitHub releases tied to Context Engineering improvements
 - Enhanced changelog generation focusing on user-facing toolkit changes
 - Manual release workflow with toolkit-focused descriptions
+- Agent definition files in `.claude/agents/` for task lifecycle (create/refine/start/submit/validate)
 
 ### Changed
 - Release strategy now focuses on toolkit improvements rather than installer changes

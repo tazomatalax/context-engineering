@@ -48,6 +48,16 @@ The installer is a **simple delivery service** that copies toolkit files to your
   - `validate-execution.md` - AI code review (optional)
   - `submit-pr.md` - Submit PRs with developer notes
 
+### Agent Definitions
+- `.claude/agents/` - 5 agent specifications used by advanced orchestrators (or future automation layers):
+  - `create-task.md` (task-creator)
+  - `refine-task.md` (task-refiner)
+  - `start-task.md` (task-starter)
+  - `submit-pr.md` (pr-submitter)
+  - `validate-execution.md` (execution-validator)
+  
+These agent definition files complement the interactive command files. Commands are user-triggered entry points; agents provide richer metadata for automated multi-agent workflows or external tooling that wants to introspect capabilities.
+
 ### GitHub Integration
 - `.github/ISSUE_TEMPLATE/feature-request.yml` - Structured issue template
 - `.github/PULL_REQUEST_TEMPLATE.md` - PR template with validation checklist

@@ -232,7 +232,13 @@ function runUninstaller() {
     '.claude/commands/submit-pr.md',
     '.claude/commands/create-task.md',
     '.claude/commands/refine-task.md',
-    '.claude/commands/execute-prp.md'
+    '.claude/commands/execute-prp.md',
+    // Agent definition files
+    '.claude/agents/create-task.md',
+    '.claude/agents/refine-task.md',
+    '.claude/agents/start-task.md',
+    '.claude/agents/submit-pr.md',
+    '.claude/agents/validate-execution.md'
   ];
   
   console.log(chalk.blue('\n📋 Files/directories that will be removed:'));
@@ -278,6 +284,7 @@ function runUninstaller() {
   // Check for empty parent directories that might need cleanup
   const potentialEmptyDirs = [
     '.claude/commands',
+    '.claude/agents',
     '.claude',
     'scripts/generation',
     'scripts/submission', 
@@ -368,6 +375,7 @@ function showHelp() {
   console.log(chalk.white('  npx context-engineering-installer --help         Show this help\n'));
   console.log(chalk.yellow('What gets installed:'));
   console.log(chalk.white('  • .claude/commands/ - 6 AI commands for Context Engineering workflow'));
+  console.log(chalk.white('  • .claude/agents/   - 5 agent definitions powering task lifecycle automation'));
   console.log(chalk.white('  • .github/ - Issue and PR templates'));
   console.log(chalk.white('  • scripts/ - Automation scripts for GitHub integration'));
   console.log(chalk.white('  • PRPs/ - Plan templates and active directory'));
