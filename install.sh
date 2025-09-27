@@ -1,13 +1,17 @@
 #!/bin/bash
 #
 # Context Engineering Universal Installer
-# Works without Node.js/npm dependency
+# Supports both UV (Python) and NPM installation methods
 #
 # USAGE:
 #   curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
 #   # OR clone and run locally:
 #   git clone https://github.com/tazomatalax/context-engineering.git
 #   cd context-engineering && ./install.sh
+#
+# OPTIONS:
+#   --python    Force Python/UV installation (default if UV available)
+#   --npm       Force NPM installation (fallback)
 #
 
 set -e
@@ -25,6 +29,29 @@ info() { echo -e "${BLUE}🚀 $1${NC}"; }
 success() { echo -e "${GREEN}✅ $1${NC}"; }
 warn() { echo -e "${YELLOW}⚠️  $1${NC}"; }
 error() { echo -e "${RED}❌ $1${NC}"; }
+
+# Detect installation method
+detect_installation_method() {
+    local force_python="$1"
+    local force_npm="$2"
+
+    if [[ "$force_python" == "true" ]]; then
+        echo "true"
+        return
+    fi
+
+    if [[ "$force_npm" == "true" ]]; then
+        echo "false"
+        return
+    fi
+
+    # Auto-detect: prefer UV if available, fallback to NPM
+    if command -v uv >/dev/null 2>&1; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
 
 # Check if parent directory is a git repository
 check_git_repo() {
@@ -112,10 +139,19 @@ install_files() {
     # PRP templates
     download_file "PRPs/templates/prp_base.md" "PRPs/templates/prp_base.md"
     
-    # Scripts
-    download_file "scripts/generation/generate-from-issue.cjs" "scripts/generation/generate-from-issue.cjs"
-    download_file "scripts/post-issue.cjs" "scripts/post-issue.cjs"
-    download_file "scripts/submission/submit-pr.cjs" "scripts/submission/submit-pr.cjs"
+    # Scripts (detect installation method and install appropriate versions)
+    if [[ "$USE_PYTHON" == "true" ]]; then
+        download_file "scripts/generation/generate-from-issue.py" "scripts/generation/generate-from-issue.py"
+        download_file "scripts/post-issue.py" "scripts/post-issue.py"
+        download_file "scripts/submission/submit-pr.py" "scripts/submission/submit-pr.py"
+        chmod +x scripts/generation/generate-from-issue.py
+        chmod +x scripts/post-issue.py
+        chmod +x scripts/submission/submit-pr.py
+    else
+        download_file "scripts/generation/generate-from-issue.cjs" "scripts/generation/generate-from-issue.cjs"
+        download_file "scripts/post-issue.cjs" "scripts/post-issue.cjs"
+        download_file "scripts/submission/submit-pr.cjs" "scripts/submission/submit-pr.cjs"
+    fi
     
     # Documentation
     download_file "AI_RULES.md" "AI_RULES.md"
@@ -157,12 +193,41 @@ EOF
 
 # Main installation function
 main() {
+    local force_python="false"
+    local force_npm="false"
+
+    # Parse command line arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --python)
+                force_python="true"
+                shift
+                ;;
+            --npm)
+                force_npm="true"
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    # Detect installation method
+    USE_PYTHON=$(detect_installation_method "$force_python" "$force_npm")
+
     echo -e "${BLUE}"
     echo "  ╭─────────────────────────────────────────╮"
     echo "  │   Context Engineering Universal Setup   │"
     echo "  ╰─────────────────────────────────────────╯"
     echo -e "${NC}"
-    
+
+    if [[ "$USE_PYTHON" == "true" ]]; then
+        info "Using Python/UV installation method"
+    else
+        info "Using NPM/Node.js installation method"
+    fi
+
     PROJECT_ROOT=$(detect_project_root)
     
     info "Installing in: $PROJECT_ROOT"
@@ -183,7 +248,12 @@ main() {
     echo "   # Edit .env with your GitHub credentials"
     echo ""
     echo "2. For GitHub integration (optional), install script dependencies:"
-    echo "   npm install @octokit/rest@19.0.13 dotenv"
+    if [[ "$USE_PYTHON" == "true" ]]; then
+        echo "   uv add requests python-dotenv rich click"
+        echo "   # OR with pip: pip install requests python-dotenv rich click"
+    else
+        echo "   npm install @octokit/rest@19.0.13 dotenv"
+    fi
     echo ""
     echo "3. Configure validate.sh for your project type"
     echo ""
@@ -197,13 +267,20 @@ case "${1:-}" in
         echo "Context Engineering Universal Installer"
         echo ""
         echo "Usage:"
-        echo "  ./install.sh          Install the toolkit"  
-        echo "  ./install.sh --help   Show this help"
+        echo "  ./install.sh              Install with auto-detection (UV preferred)"
+        echo "  ./install.sh --python     Force Python/UV installation"
+        echo "  ./install.sh --npm        Force NPM/Node.js installation"
+        echo "  ./install.sh --help       Show this help"
+        echo ""
+        echo "Installation Methods:"
+        echo "  Python/UV (default):      Fast, modern Python package manager"
+        echo "  NPM/Node.js (fallback):   Traditional Node.js dependency"
         echo ""
         echo "Requirements:"
         echo "  - Git repository"
         echo "  - curl or wget (for remote installation)"
-        echo "  - jq (for GitHub API calls)"
+        echo "  For Python method: uv or pip"
+        echo "  For NPM method: Node.js and npm"
         echo ""
         exit 0
         ;;
