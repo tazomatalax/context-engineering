@@ -77,7 +77,7 @@ Create file: `temp/task-draft-{YYYYMMDD-HHMMSS}.md`
 ## 🔄 Next Steps
 
 1. **Review & Edit:** Modify this file to add details or corrections
-2. **Post to GitHub:** `node scripts/post-issue.cjs temp/task-draft-{timestamp}.md`
+2. **Post to GitHub:** `bash scripts/post-issue-universal.sh temp/task-draft-{timestamp}.md`
 3. **Start Implementation:** `/start-task --issue=<returned-issue-number>`
 ```
 
@@ -140,9 +140,10 @@ After creating the file, provide EXACTLY this instruction:
 
 🔄 Next steps:
 1. Review and edit the file to add any missing details
-2. Post to GitHub:
+2. Post to GitHub (multiple options):
 
-! node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+! bash scripts/post-issue-universal.sh temp/task-draft-{timestamp}.md
+! scripts/post-issue-universal.bat temp/task-draft-{timestamp}.md (Windows)  
 
 3. Start implementation: /start-task --issue=<number>
 
