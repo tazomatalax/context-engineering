@@ -50,14 +50,10 @@ context-engineering-installer = "context_installer.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/context_installer"]
-include = [
-    "installer/toolkit/**/*",
-]
 
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
-    "/installer/toolkit",
     "/README.md"
 ]
 

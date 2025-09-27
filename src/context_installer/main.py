@@ -60,11 +60,12 @@ def main():
 
     # Try multiple locations to find toolkit files
     possible_locations = [
+        # UV package location (toolkit files in package)
+        Path(__file__).parent / "toolkit",
         # Development/repo location
         Path(__file__).parent.parent.parent / "installer" / "toolkit",
-        # UV package location (toolkit files included in package)
+        # Alternative UV package locations
         Path(__file__).parent.parent / "installer" / "toolkit",
-        # Alternative UV package location
         Path(__file__).parent / "installer" / "toolkit",
     ]
 
