@@ -19,8 +19,10 @@
     "installer"
   ],
   "dependencies": {
-    "fs-extra": "^11.1.1",
-    "chalk": "^4.1.2"
+    "@octokit/rest": "^19.0.13",
+    "chalk": "^4.1.2",
+    "dotenv": "^17.2.2",
+    "fs-extra": "^11.1.1"
   },
   "repository": {
     "type": "git",
