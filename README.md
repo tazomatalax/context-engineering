@@ -24,7 +24,8 @@ cd your-existing-project
 # Install directly from GitHub (no local installation needed)
 uvx --from git+https://github.com/tazomatalax/context-engineering context-engineering-installer
 
-# Uninstall: just remove the files as shown during installation
+# Uninstall easily
+uvx --from git+https://github.com/tazomatalax/context-engineering context-engineering-installer --uninstall
 ```
 
 **Option B: Universal Script Installation (No dependencies)**
@@ -223,7 +224,8 @@ cd your-existing-project
 # Install directly from GitHub - 99x faster than NPM!
 uvx --from git+https://github.com/tazomatalax/context-engineering context-engineering-installer
 
-# Uninstall: remove files as shown during installation
+# Uninstall easily
+uvx --from git+https://github.com/tazomatalax/context-engineering context-engineering-installer --uninstall
 ```
 
 **Method 2: Universal Script (Auto-detection)**
