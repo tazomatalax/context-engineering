@@ -55,13 +55,29 @@ def main():
 
     console.print("🚀 Installing Context Engineering Toolkit...", style="blue")
 
-    # Get source and destination directories (from repo root perspective)
-    repo_root = Path(__file__).parent.parent.parent
-    source_toolkit_dir = repo_root / "installer" / "toolkit"
+    # Get source and destination directories
     destination_dir = Path.cwd()
 
-    if not source_toolkit_dir.exists():
-        console.print(f"❌ Error: Toolkit directory not found at {source_toolkit_dir}", style="red")
+    # Try multiple locations to find toolkit files
+    possible_locations = [
+        # Development/repo location
+        Path(__file__).parent.parent.parent / "installer" / "toolkit",
+        # UV package location (toolkit files included in package)
+        Path(__file__).parent.parent / "installer" / "toolkit",
+        # Alternative UV package location
+        Path(__file__).parent / "installer" / "toolkit",
+    ]
+
+    source_toolkit_dir = None
+    for location in possible_locations:
+        if location.exists():
+            source_toolkit_dir = location
+            break
+
+    if source_toolkit_dir is None:
+        console.print("❌ Error: Toolkit directory not found in any expected location:", style="red")
+        for loc in possible_locations:
+            console.print(f"  Checked: {loc}", style="dim")
         console.print("This usually means the package wasn't installed correctly.", style="red")
         sys.exit(1)
 
