@@ -20,6 +20,9 @@ YELLOW='\033[1;33m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
+# Runtime selection (default to node for backward compatibility)
+RUNTIME="${RUNTIME:-node}"
+
 # Helper functions
 info() { echo -e "${BLUE}🚀 $1${NC}"; }
 success() { echo -e "${GREEN}✅ $1${NC}"; }
@@ -53,6 +56,85 @@ detect_project_root() {
     
     # Fallback to parent directory if no .git found
     echo "$parent_dir"
+}
+
+# Detect available runtimes
+detect_runtime() {
+    local has_node=false
+    local has_python=false
+    
+    if command -v node >/dev/null 2>&1; then
+        has_node=true
+    fi
+    
+    if command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
+        has_python=true
+    fi
+    
+    # If RUNTIME env var is set, validate and use it
+    if [[ -n "$RUNTIME" ]]; then
+        case "$RUNTIME" in
+            node)
+                if ! $has_node; then
+                    warn "Node.js runtime requested but not found in PATH"
+                    return 1
+                fi
+                return 0
+                ;;
+            python)
+                if ! $has_python; then
+                    warn "Python runtime requested but not found in PATH"
+                    return 1
+                fi
+                return 0
+                ;;
+            *)
+                error "Invalid RUNTIME value: $RUNTIME (must be 'node' or 'python')"
+                return 1
+                ;;
+        esac
+    fi
+    
+    # Interactive runtime selection
+    echo ""
+    echo -e "${BLUE}╭────────────────────────────────────────╮${NC}"
+    echo -e "${BLUE}│     Select Workflow Script Runtime     │${NC}"
+    echo -e "${BLUE}╰────────────────────────────────────────╯${NC}"
+    echo ""
+    
+    if $has_node && $has_python; then
+        echo "Both Node.js and Python are available:"
+        echo ""
+        echo "  1) Node.js  (requires: npm, @octokit/rest)"
+        echo "  2) Python   (requires: uv or pip, requests)"
+        echo ""
+        read -p "Enter choice [1-2]: " choice
+        
+        case "$choice" in
+            1) RUNTIME="node" ;;
+            2) RUNTIME="python" ;;
+            *)
+                warn "Invalid choice. Defaulting to Node.js"
+                RUNTIME="node"
+                ;;
+        esac
+    elif $has_node; then
+        info "Node.js detected - using Node.js runtime"
+        RUNTIME="node"
+    elif $has_python; then
+        info "Python detected - using Python runtime"
+        RUNTIME="python"
+    else
+        error "Neither Node.js nor Python found in PATH"
+        echo "Please install one of:"
+        echo "  - Node.js: https://nodejs.org/"
+        echo "  - Python: https://python.org/"
+        return 1
+    fi
+    
+    echo ""
+    success "Selected runtime: $RUNTIME"
+    return 0
 }
 
 # Download file from GitHub if not running locally
@@ -112,10 +194,21 @@ install_files() {
     # PRP templates
     download_file "PRPs/templates/prp_base.md" "PRPs/templates/prp_base.md"
     
-    # Scripts
-    download_file "scripts/generation/generate-from-issue.cjs" "scripts/generation/generate-from-issue.cjs"
-    download_file "scripts/post-issue.cjs" "scripts/post-issue.cjs"
-    download_file "scripts/submission/submit-pr.cjs" "scripts/submission/submit-pr.cjs"
+    # Runtime-specific scripts
+    if [[ "$RUNTIME" == "node" ]]; then
+        info "Installing Node.js runtime scripts..."
+        download_file "runtimes/node/scripts/post-issue.cjs" "scripts/post-issue.cjs"
+        download_file "runtimes/node/scripts/generation/generate-from-issue.cjs" "scripts/generation/generate-from-issue.cjs"
+        download_file "runtimes/node/scripts/submission/submit-pr.cjs" "scripts/submission/submit-pr.cjs"
+    elif [[ "$RUNTIME" == "python" ]]; then
+        info "Installing Python runtime scripts..."
+        download_file "runtimes/python/scripts/post_issue.py" "scripts/post_issue.py"
+        download_file "runtimes/python/scripts/generation/generate_from_issue.py" "scripts/generation/generate_from_issue.py"
+        download_file "runtimes/python/scripts/submission/submit_pr.py" "scripts/submission/submit_pr.py"
+        chmod +x scripts/post_issue.py
+        chmod +x scripts/generation/generate_from_issue.py
+        chmod +x scripts/submission/submit_pr.py
+    fi
     
     # Documentation
     download_file "AI_RULES.md" "AI_RULES.md"
@@ -169,6 +262,10 @@ main() {
     
     check_git_repo "$PROJECT_ROOT"
     cd "$PROJECT_ROOT"
+    
+    # Detect and select runtime
+    detect_runtime || exit 1
+    
     create_directories
     install_files
     download_validation_script
@@ -182,13 +279,31 @@ main() {
     echo "   cp .env.example .env"
     echo "   # Edit .env with your GitHub credentials"
     echo ""
-    echo "2. For GitHub integration (optional), install script dependencies:"
-    echo "   npm install @octokit/rest@19.0.13 dotenv"
+    
+    if [[ "$RUNTIME" == "node" ]]; then
+        echo "2. Install Node.js dependencies:"
+        echo "   npm install @octokit/rest dotenv"
+        echo ""
+        echo "3. Usage examples:"
+        echo "   node scripts/post-issue.cjs temp/draft.md"
+        echo "   node scripts/generation/generate-from-issue.cjs 123"
+        echo "   node scripts/submission/submit-pr.cjs --issue=123"
+    elif [[ "$RUNTIME" == "python" ]]; then
+        echo "2. Install Python dependencies:"
+        echo "   uv pip install requests"
+        echo "   # Or: pip install requests"
+        echo ""
+        echo "3. Usage examples:"
+        echo "   uv run scripts/post_issue.py temp/draft.md"
+        echo "   uv run scripts/generation/generate_from_issue.py 123"
+        echo "   uv run scripts/submission/submit_pr.py --issue=123"
+    fi
+    
     echo ""
-    echo "3. Configure validate.sh for your project type"
+    echo "4. Configure validate.sh for your project type"
     echo ""
     info "Installation complete! You can now use /create-task in Claude Code"
-    echo -e "${GRAY}To uninstall: rm -rf .claude PRPs scripts/generation scripts/submission validate.sh AI_RULES.md advanced_tools.md${NC}"
+    echo -e "${GRAY}To uninstall: rm -rf .claude PRPs scripts validate.sh AI_RULES.md advanced_tools.md${NC}"
 }
 
 # Handle help and uninstall flags
