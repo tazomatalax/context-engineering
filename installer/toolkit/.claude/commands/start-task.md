@@ -14,14 +14,21 @@ Fetch complete GitHub issue context and prepare for local execution.
    ✅ .env file exists
    ✅ GITHUB_TOKEN is set in .env  
    ✅ GITHUB_REPO is set in .env
-   ✅ scripts/generation/generate-from-issue.cjs exists
+   ✅ scripts/generation/generate-from-issue.cjs OR scripts/generation/generate_from_issue.py exists
    ✅ PRPs/active/ directory exists
    ```
 
 2. **Test GitHub Connection**
    ```bash
-   # Validate credentials work
-   node scripts/generation/generate-from-issue.cjs --test-connection
+   # Detect runtime and validate credentials work
+   if [ -f "scripts/generation/generate_from_issue.py" ]; then
+       uv run scripts/generation/generate_from_issue.py --test-connection
+   elif [ -f "scripts/generation/generate-from-issue.cjs" ]; then
+       node scripts/generation/generate-from-issue.cjs --test-connection
+   else
+       echo "Error: No workflow scripts found"
+       exit 1
+   fi
    ```
    ```
    ❌ IF CONNECTION FAILS: Stop and show exact error
@@ -32,8 +39,15 @@ Fetch complete GitHub issue context and prepare for local execution.
 
 3. **Fetch Complete Issue Data**
    ```bash
-   # Execute the generation script
-   node scripts/generation/generate-from-issue.cjs <issue-number>
+   # Detect runtime and execute the generation script
+   if [ -f "scripts/generation/generate_from_issue.py" ]; then
+       uv run scripts/generation/generate_from_issue.py <issue-number>
+   elif [ -f "scripts/generation/generate-from-issue.cjs" ]; then
+       node scripts/generation/generate-from-issue.cjs <issue-number>
+   else
+       echo "Error: No workflow scripts found"
+       exit 1
+   fi
    ```
 
 4. **Validate Issue Data Retrieved**

@@ -14,7 +14,7 @@ Create and submit a pull request. By default, the script embeds the PRP's Implem
    ✅ .env file exists with GITHUB_TOKEN and GITHUB_REPO
    ✅ Git repository with changes to commit
    ✅ ./validate.sh has passed successfully  
-   ✅ scripts/submission/submit-pr.cjs exists
+   ✅ scripts/submission/submit-pr.cjs OR scripts/submission/submit_pr.py exists
    ✅ Issue number is valid
    ```
 
@@ -81,15 +81,31 @@ Create and submit a pull request. By default, the script embeds the PRP's Implem
 
 8. **Execute Submission Script**
    ```bash
-   # Default: auto-embeds PRP Implementation Notes
-   node scripts/submission/submit-pr.cjs --issue={issue-number}
+   # Detect runtime and execute submission
+   if [ -f "scripts/submission/submit_pr.py" ]; then
+       # Python runtime - default: auto-embeds PRP Implementation Notes
+       uv run scripts/submission/submit_pr.py --issue={issue-number}
 
-   # Optional: include curated Developer Notes
-   node scripts/submission/submit-pr.cjs --issue={issue-number} --notes-file=temp/pr-notes-{issue-number}.md
+       # Optional: include curated Developer Notes
+       # uv run scripts/submission/submit_pr.py --issue={issue-number} --notes-file=temp/pr-notes-{issue-number}.md
 
-   # Flags:
-   #   --no-prp-notes        # do not include PRP Implementation Notes
-   #   --collapse-prp-notes  # wrap PRP notes in a collapsible section
+       # Flags:
+       #   --no-prp-notes        # do not include PRP Implementation Notes
+       #   --collapse-prp-notes  # wrap PRP notes in a collapsible section
+   elif [ -f "scripts/submission/submit-pr.cjs" ]; then
+       # Node runtime - default: auto-embeds PRP Implementation Notes
+       node scripts/submission/submit-pr.cjs --issue={issue-number}
+
+       # Optional: include curated Developer Notes
+       # node scripts/submission/submit-pr.cjs --issue={issue-number} --notes-file=temp/pr-notes-{issue-number}.md
+
+       # Flags:
+       #   --no-prp-notes        # do not include PRP Implementation Notes
+       #   --collapse-prp-notes  # wrap PRP notes in a collapsible section
+   else
+       echo "Error: No workflow scripts found"
+       exit 1
+   fi
    ```
 
 9. **Validate Submission Success**
@@ -137,7 +153,8 @@ PRE-SUBMISSION ERRORS:
 ├── validate.sh fails → "Fix validation errors before submitting PR"
 ├── No git changes → "No changes to commit - implement feature first"
 ├── .env missing → "Configure .env with GITHUB_TOKEN and GITHUB_REPO"
-└── Invalid issue → "Issue #{number} does not exist or is inaccessible"
+├── Invalid issue → "Issue #{number} does not exist or is inaccessible"
+└── No runtime scripts → "Run installer to set up workflow scripts"
 
 GIT OPERATION ERRORS:
 ├── Commit fails → "Fix git conflicts and try again"
@@ -152,8 +169,9 @@ GITHUB API ERRORS:
 └── Network Error → "Check internet connection and retry"
 
 SCRIPT EXECUTION ERRORS:
-├── Node.js script missing → "Run installer to restore missing scripts"
-├── Dependencies missing → "Run: npm install @octokit/rest dotenv"
+├── Runtime script missing → "Run installer to restore missing scripts"
+├── Dependencies missing (Node) → "Run: npm install @octokit/rest dotenv"
+├── Dependencies missing (Python) → "Run: uv pip install requests"
 ├── Notes file missing → "Developer notes generation failed"
 └── Permission denied → "Check file system permissions"
 ```
@@ -193,7 +211,7 @@ Before completion, verify:
 This command completes the Context Engineering workflow:
 
 1. `/create-task "feature description"` → Draft comprehensive issue
-2. `node scripts/post-issue.cjs temp/task-draft-*.md` → Post to GitHub
+2. Use runtime-appropriate post command → Post to GitHub
 3. `/start-task --issue=123` → Fetch complete context  
 4. `/execute-prp PRPs/active/123-*.md` → Implement feature
 5. `/submit-pr --issue=123` → **Submit for review**

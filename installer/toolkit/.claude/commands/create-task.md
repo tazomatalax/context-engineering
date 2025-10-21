@@ -142,7 +142,14 @@ After creating the file, provide EXACTLY this instruction:
 1. Review and edit the file to add any missing details
 2. Post to GitHub:
 
-! node scripts/post-issue.cjs temp/task-draft-{timestamp}.md  
+   # Detect runtime and use appropriate command
+   if [ -f "scripts/post_issue.py" ]; then
+       uv run scripts/post_issue.py temp/task-draft-{timestamp}.md
+   elif [ -f "scripts/post-issue.cjs" ]; then
+       node scripts/post-issue.cjs temp/task-draft-{timestamp}.md
+   else
+       echo "Error: No workflow scripts found. Please run the installer."
+   fi
 
 3. Start implementation: /start-task --issue=<number>
 

@@ -28,77 +28,57 @@
 
 ## 🚧 What's Still Needed
 
-### 1. Complete Node Runtime Script Migration
-**Priority: HIGH**
-**Estimated Time: 30 minutes**
+### 1. Complete Node Runtime Script Migration ✅ COMPLETED
+**Status: DONE**
 
-The Node scripts need to be physically copied to their runtime-specific locations:
+The Node scripts have been successfully copied to `installer/toolkit/runtimes/node/scripts/`:
+- ✅ `post-issue.cjs`
+- ✅ `generation/generate-from-issue.cjs`
+- ✅ `submission/submit-pr.cjs`
 
-```bash
-cd /workspaces/context-engineering/installer/toolkit
+### 2. Update Claude Command Files ✅ COMPLETED
+**Status: DONE**
 
-# Copy Node scripts to runtime directory
-cp scripts/post-issue.cjs runtimes/node/scripts/
-cp scripts/generation/generate-from-issue.cjs runtimes/node/scripts/generation/
-cp scripts/submission/submit-pr.cjs runtimes/node/scripts/submission/
+All `.claude/commands/*.md` files have been updated to support both runtimes:
+- ✅ `create-task.md` - Auto-detects runtime for posting issues
+- ✅ `start-task.md` - Auto-detects runtime for fetching issues
+- ✅ `submit-pr.md` - Auto-detects runtime for submitting PRs
 
-# Verify copies
-ls -la runtimes/node/scripts/
-ls -la runtimes/python/scripts/
-```
+**Implementation:**
+- Added runtime detection logic (checks for `.py` vs `.cjs` files)
+- Updated bash commands to use correct runtime
+- Added fallback instructions if runtime not detected
 
-### 2. Update Claude Command Files
-**Priority: HIGH**
-**Estimated Time: 45 minutes**
+### 3. Update Documentation ✅ COMPLETED
+**Status: DONE**
 
-Update all `.claude/commands/*.md` files to support both runtimes:
+Documentation has been updated with runtime selection information:
+- ✅ `README.md` - Added runtime selection section in Quick Start
+- ✅ `INSTALL.md` - Documented runtime options, pros/cons, and setup
+- ✅ Main docs explain both Python and Node.js runtimes
 
-**Files to update:**
-- `installer/toolkit/.claude/commands/create-task.md`
-- `installer/toolkit/.claude/commands/start-task.md`
-- `installer/toolkit/.claude/commands/submit-pr.md`
+### 4. Create Runtime Detection Helper ✅ COMPLETED
+**Status: DONE**
 
-**Changes needed:**
-- Add runtime detection logic (check for `scripts/post_issue.py` vs `scripts/post-issue.cjs`)
-- Update bash commands to use correct runtime:
-  - Node: `node scripts/post-issue.cjs ...`
-  - Python: `uv run scripts/post_issue.py ...`
-- Add fallback instructions if runtime not detected
+Created `installer/toolkit/scripts/detect-runtime.sh` with:
+- ✅ `detect_runtime_type()` - Detects Python vs Node.js
+- ✅ `get_post_issue_cmd()` - Returns correct command for runtime
+- ✅ `get_generate_from_issue_cmd()` - Returns correct command for runtime
+- ✅ `get_submit_pr_cmd()` - Returns correct command for runtime
+- ✅ `check_runtime_dependencies()` - Validates runtime setup
+- ✅ `show_runtime_info()` - Displays runtime information
 
-**Example pattern:**
-```bash
-# Detect runtime
-if [ -f "scripts/post_issue.py" ]; then
-    RUNTIME_CMD="uv run scripts/post_issue.py"
-elif [ -f "scripts/post-issue.cjs" ]; then
-    RUNTIME_CMD="node scripts/post-issue.cjs"
-else
-    echo "Error: No workflow scripts found"
-    exit 1
-fi
+### 5. Update Uninstall Logic ✅ COMPLETED
+**Status: DONE**
 
-# Use detected runtime
-$RUNTIME_CMD temp/task-draft.md
-```
+The uninstaller message in `install.sh` has been updated:
+- ✅ Now includes `.env` in cleanup command
+- ✅ Handles both runtime script formats
 
-### 3. Update Documentation
-**Priority: MEDIUM**
-**Estimated Time: 30 minutes**
-
-**Files to update:**
-- `README.md` - Add runtime selection section
-- `INSTALL.md` - Document runtime options
-- `installer/toolkit/advanced_tools.md` - Add runtime-specific examples
-
-**Content to add:**
-- Runtime comparison table (Node vs Python)
-- When to choose each runtime
-- Migration guide for existing installations
-- Troubleshooting for each runtime
-
-### 4. Test Installation Flow
+### 6. Test Installation Flow
 **Priority: HIGH**
 **Estimated Time: 20 minutes**
+**Status: READY TO TEST**
 
 Test both runtime paths:
 
@@ -171,6 +151,7 @@ export -f get_post_issue_cmd
 ### 7. Backward Compatibility Testing
 **Priority: MEDIUM**
 **Estimated Time: 30 minutes**
+**Status: READY TO TEST**
 
 Ensure existing Node-based installations continue to work:
 - Test upgrade path (reinstall with Python runtime)
@@ -178,15 +159,15 @@ Ensure existing Node-based installations continue to work:
 - Test with existing PRPs
 - Validate `.env` file handling in both runtimes
 
-## 📋 Recommended Work Order
+## 📋 Recommended Work Order ✅ PROGRESS UPDATE
 
-1. **Copy Node scripts** (Step 1) - Unblocks everything else
-2. **Test installation flow** (Step 4) - Validate core functionality
-3. **Update Claude commands** (Step 2) - Critical for user workflow
-4. **Update documentation** (Step 3) - Help users understand changes
-5. **Create runtime helper** (Step 6) - Makes commands cleaner
-6. **Update uninstall** (Step 5) - Polish
-7. **Backward compat testing** (Step 7) - Final validation
+1. ✅ **Copy Node scripts** (Step 1) - COMPLETED
+2. ✅ **Update Claude commands** (Step 2) - COMPLETED
+3. ✅ **Update documentation** (Step 3) - COMPLETED
+4. ✅ **Create runtime helper** (Step 6) - COMPLETED (out of order)
+5. ✅ **Update uninstall** (Step 5) - COMPLETED
+6. 🔄 **Test installation flow** (Step 4) - IN PROGRESS
+7. ⏳ **Backward compat testing** (Step 7) - READY
 
 ## 🔍 Testing Checklist
 

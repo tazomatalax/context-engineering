@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
+const readline = require('readline');
 
 function main() {
   // Check for help flag
@@ -18,88 +19,281 @@ function main() {
   }
 
   console.log(chalk.blue('🚀 Installing Context Engineering Toolkit...'));
+  console.log(chalk.blue('='.repeat(60)));
 
   const sourceToolkitDir = path.resolve(__dirname, '..', 'toolkit');
   const destinationDir = process.cwd();
 
-  try {
-    // Install toolkit with smart handling of special files
-    installToolkit(sourceToolkitDir, destinationDir);
-    console.log(chalk.green('✅ Toolkit files copied successfully!'));
-  } catch (error) {
-    console.error(chalk.red('❌ Installation failed:'), error);
+  // Check if in git repository
+  if (!isGitRepository(destinationDir)) {
+    console.error(chalk.red('❌ Not in a git repository!'));
+    console.log('\nPlease run this installer from within a git repository:');
+    console.log('  cd your-project');
+    console.log('  git init  # if not already a git repo');
+    console.log('  npx context-engineering-installer');
     process.exit(1);
   }
 
-  // Print next steps
-  console.log(chalk.yellow('\n--- ACTION REQUIRED: Configuration ---'));
-  console.log('The toolkit is installed but needs to be configured for your project.');
-  console.log('\n1. ' + chalk.bold('Install script dependencies:'));
-  console.log('   npm install @octokit/rest@19.0.13 dotenv');
-  console.log('\n2. ' + chalk.bold('Configure your environment:'));
-  console.log('   cp .env.example .env');
-  console.log('   (Edit .env with your GitHub token and repository)');
-  console.log('\n3. ' + chalk.bold('Configure your validation script:'));
-  console.log('   (Open `validate.sh` and add your project\'s test and lint commands)');
-  console.log('\n👉 Your AI assistant can help you with this! Just ask:');
-  console.log(chalk.cyan('"Help me configure my `validate.sh` script for a React project."'));
-  console.log(chalk.green('\n🎉 Installation complete!'));
-  console.log(chalk.gray('\nTo uninstall: npx context-engineering-installer --uninstall'));
-  console.log(chalk.blue('\n💡 Alternative: Use our universal installer (no Node.js required):'));
-  console.log(chalk.gray('   curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash'));
+  // Detect or prompt for runtime
+  detectAndSelectRuntime().then(runtime => {
+    try {
+      // Install toolkit with smart handling of special files
+      installToolkit(sourceToolkitDir, destinationDir, runtime);
+      console.log(chalk.green('✅ Toolkit files copied successfully!'));
+      showNextSteps(runtime);
+    } catch (error) {
+      console.error(chalk.red('❌ Installation failed:'), error);
+      process.exit(1);
+    }
+  });
 }
 
-function installToolkit(sourceDir, destDir) {
+function isGitRepository(dir) {
+  let current = path.resolve(dir);
+  while (current !== path.dirname(current)) {
+    if (fs.existsSync(path.join(current, '.git'))) {
+      return true;
+    }
+    current = path.dirname(current);
+  }
+  return false;
+}
+
+function hasCommand(cmd) {
+  try {
+    require('child_process').execSync(`which ${cmd}`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function detectAndSelectRuntime() {
+  // Check for RUNTIME environment variable override
+  const runtimeOverride = process.env.RUNTIME;
+  if (runtimeOverride === 'python' || runtimeOverride === 'node') {
+    console.log(chalk.blue(`\n🔧 Using runtime from RUNTIME env var: ${runtimeOverride}`));
+    return runtimeOverride;
+  }
+
+  // Detect available runtimes
+  const hasUv = hasCommand('uv');
+  const hasNode = hasCommand('node');
+
+  console.log(chalk.gray(`\nDetected: ${hasUv ? 'uv ✓' : 'uv ✗'} | ${hasNode ? 'node ✓' : 'node ✗'}`));
+
+  // Prompt for runtime selection
+  return promptRuntime();
+}
+
+function promptRuntime() {
+  return new Promise((resolve) => {
+    console.log('\n' + '='.repeat(60));
+    console.log('Select Runtime');
+    console.log('='.repeat(60));
+    console.log('\n🐍 Python Runtime (Recommended)');
+    console.log('   - Minimal dependencies (only \'requests\')');
+    console.log('   - Fast execution with uv');
+    console.log('   - No Node.js required');
+    console.log('\n� Node.js Runtime');
+    console.log('   - Requires Node.js and npm');
+    console.log('   - Uses @octokit/rest and dotenv');
+    console.log('   - Good if you already have Node.js');
+    console.log('\n' + '='.repeat(60));
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    rl.question('\nChoose runtime [python/node] (default: python): ', (answer) => {
+      rl.close();
+      const choice = answer.trim().toLowerCase();
+
+      if (choice === '' || choice === 'python' || choice === 'p') {
+        resolve('python');
+      } else if (choice === 'node' || choice === 'n') {
+        resolve('node');
+      } else {
+        console.log(chalk.yellow(`Invalid choice: '${choice}'. Defaulting to python`));
+        resolve('python');
+      }
+    });
+  });
+}
+
+function installToolkit(sourceDir, destDir, runtime) {
+  console.log(chalk.blue(`\n📁 Project root: ${destDir}`));
+  console.log(chalk.blue(`🔧 Runtime: ${runtime}\n`));
+
   // Files that should be merged instead of skipped when they exist
   const filesToMerge = new Set(['.env.example']);
   
-  // Recursively copy toolkit with special handling
-  copyToolkitRecursive(sourceDir, destDir, filesToMerge);
-}
+  // Copy .claude commands
+  copyDirectory(
+    path.join(sourceDir, '.claude'),
+    path.join(destDir, '.claude'),
+    'Claude Code commands'
+  );
 
-function copyToolkitRecursive(srcDir, destDir, filesToMerge) {
-  const items = fs.readdirSync(srcDir);
-  
-  for (const item of items) {
-    const srcPath = path.join(srcDir, item);
-    const destPath = path.join(destDir, item);
-    const stats = fs.statSync(srcPath);
-    
-    if (stats.isDirectory()) {
-      // Create directory if it doesn't exist
-      fs.ensureDirSync(destPath);
-      // Recursively copy contents
-      copyToolkitRecursive(srcPath, destPath, filesToMerge);
-    } else {
-      // Handle file copying with merge logic
-      const relativePath = path.relative(path.resolve(__dirname, '..', 'toolkit'), srcPath);
-      
-      if (filesToMerge.has(relativePath)) {
-        // Special handling for files that should be merged
-        mergeFile(srcPath, destPath, relativePath);
-      } else {
-        // Normal copy behavior: skip if exists
-        if (!fs.existsSync(destPath)) {
-          fs.copyFileSync(srcPath, destPath);
-        }
-      }
+  // Copy GitHub templates
+  copyDirectory(
+    path.join(sourceDir, '.github'),
+    path.join(destDir, '.github'),
+    'GitHub issue/PR templates'
+  );
+
+  // Copy runtime-specific scripts
+  const runtimeScriptsPath = path.join(sourceDir, 'runtimes', runtime, 'scripts');
+  if (fs.existsSync(runtimeScriptsPath)) {
+    copyDirectory(
+      runtimeScriptsPath,
+      path.join(destDir, 'scripts'),
+      `${runtime.charAt(0).toUpperCase() + runtime.slice(1)} workflow scripts`
+    );
+    makeScriptsExecutable(path.join(destDir, 'scripts'));
+  } else {
+    console.log(chalk.yellow(`⚠️  Runtime scripts not found: ${runtimeScriptsPath}`));
+  }
+
+  // Copy detect-runtime helper
+  const detectRuntimePath = path.join(sourceDir, 'scripts', 'detect-runtime.sh');
+  if (fs.existsSync(detectRuntimePath)) {
+    fs.copyFileSync(
+      detectRuntimePath,
+      path.join(destDir, 'scripts', 'detect-runtime.sh')
+    );
+    console.log(chalk.green('✅ Runtime detection helper installed'));
+    if (process.platform !== 'win32') {
+      fs.chmodSync(path.join(destDir, 'scripts', 'detect-runtime.sh'), 0o755);
     }
   }
+
+  // Create PRPs directory structure
+  const prpsDir = path.join(destDir, 'PRPs');
+  fs.ensureDirSync(path.join(prpsDir, 'active'));
+  fs.ensureDirSync(path.join(prpsDir, 'templates'));
+
+  // Copy PRP template
+  const prpTemplateSrc = path.join(sourceDir, 'PRPs', 'templates', 'prp_base.md');
+  if (fs.existsSync(prpTemplateSrc)) {
+    fs.copyFileSync(prpTemplateSrc, path.join(prpsDir, 'templates', 'prp_base.md'));
+  }
+  console.log(chalk.green('✅ PRPs directory structure created'));
+
+  // Copy validation script
+  const validateSrc = path.join(sourceDir, 'validate.sh');
+  if (fs.existsSync(validateSrc)) {
+    fs.copyFileSync(validateSrc, path.join(destDir, 'validate.sh'));
+    if (process.platform !== 'win32') {
+      fs.chmodSync(path.join(destDir, 'validate.sh'), 0o755);
+    }
+    console.log(chalk.green('✅ Validation script installed'));
+  }
+
+  // Copy AI rules
+  const aiRulesSrc = path.join(sourceDir, 'AI_RULES.md');
+  if (fs.existsSync(aiRulesSrc)) {
+    fs.copyFileSync(aiRulesSrc, path.join(destDir, 'AI_RULES.md'));
+    console.log(chalk.green('✅ AI rules documentation installed'));
+  }
+
+  // Copy advanced tools docs
+  const advancedToolsSrc = path.join(sourceDir, 'advanced_tools.md');
+  if (fs.existsSync(advancedToolsSrc)) {
+    fs.copyFileSync(advancedToolsSrc, path.join(destDir, 'advanced_tools.md'));
+    console.log(chalk.green('✅ Advanced tools documentation installed'));
+  }
+
+  // Create .env.example
+  createEnvExample(destDir);
+
+  // Create temp directory
+  fs.ensureDirSync(path.join(destDir, 'temp'));
+  console.log(chalk.green('✅ temp directory created'));
 }
 
-function mergeFile(srcPath, destPath, relativePath) {
-  const srcContent = fs.readFileSync(srcPath, 'utf8');
-  
-  if (!fs.existsSync(destPath)) {
-    // File doesn't exist, just copy it
-    fs.writeFileSync(destPath, srcContent);
+function copyDirectory(src, dest, description) {
+  if (!fs.existsSync(src)) {
+    console.log(chalk.yellow(`⚠️  Source not found: ${src}`));
     return;
   }
-  
-  if (relativePath === '.env.example') {
-    mergeEnvExample(srcPath, destPath, srcContent);
+
+  console.log(chalk.blue(`📦 Installing ${description}...`));
+  fs.ensureDirSync(dest);
+  fs.copySync(src, dest, { overwrite: false, errorOnExist: false });
+  console.log(chalk.green(`✅ ${description} installed`));
+}
+
+function makeScriptsExecutable(scriptsDir) {
+  if (process.platform === 'win32') return; // Skip on Windows
+
+  const walk = (dir) => {
+    const files = fs.readdirSync(dir);
+    files.forEach(file => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isDirectory()) {
+        walk(filePath);
+      } else if (file.endsWith('.py') || file.endsWith('.cjs') || file.endsWith('.sh')) {
+        fs.chmodSync(filePath, 0o755);
+      }
+    });
+  };
+
+  if (fs.existsSync(scriptsDir)) {
+    walk(scriptsDir);
   }
-  // Add more merge handlers here for other file types
+}
+
+function createEnvExample(destDir) {
+  const envPath = path.join(destDir, '.env.example');
+  if (!fs.existsSync(envPath)) {
+    const content = `# Context Engineering Configuration
+
+# GitHub Personal Access Token (required)
+# Create at: https://github.com/settings/tokens
+# Scopes needed: repo, workflow
+GITHUB_TOKEN=your_github_token_here
+
+# GitHub Repository (required)
+# Format: owner/repo-name
+# Example: octocat/Hello-World
+GITHUB_REPO=your_username/your_repo
+`;
+    fs.writeFileSync(envPath, content);
+    console.log(chalk.green('✅ .env.example created'));
+  }
+}
+
+function showNextSteps(runtime) {
+  console.log('\n' + '='.repeat(60));
+  console.log('Installation Complete! 🎉');
+  console.log('='.repeat(60));
+
+  console.log('\n📋 Next Steps:\n');
+  console.log('1. Configure your environment:');
+  console.log('   cp .env.example .env');
+  console.log('   # Edit .env with your GITHUB_TOKEN and GITHUB_REPO');
+  console.log();
+
+  console.log('2. Install runtime dependencies:');
+  if (runtime === 'python') {
+    console.log('   curl -LsSf https://astral.sh/uv/install.sh | sh');
+    console.log('   uv pip install requests');
+  } else {
+    console.log('   npm install @octokit/rest dotenv');
+  }
+  console.log();
+
+  console.log('3. Customize validate.sh for your project type');
+  console.log();
+
+  console.log('4. Start using Context Engineering in Claude Code:');
+  console.log('   /create-task "Add dark mode toggle"');
+  console.log();
+
+  console.log(chalk.gray('To uninstall: npx context-engineering-installer --uninstall'));
 }
 
 function mergeEnvExample(srcPath, destPath, srcContent) {

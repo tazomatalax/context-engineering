@@ -1,9 +1,17 @@
 #!/bin/bash
 #
 # Context Engineering Universal Installer
-# Works without Node.js/npm dependency
+# 
+# ⚠️  DEPRECATION NOTICE ⚠️
+# This bash installer is deprecated and will be removed in a future version.
+# 
+# Please use the modern package manager installers instead:
+#   - Python: uvx context-engineering-installer
+#   - Node.js: npx context-engineering-installer
 #
-# USAGE:
+# These are faster, more secure, and cross-platform.
+#
+# LEGACY USAGE (still works for now):
 #   curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
 #   # OR clone and run locally:
 #   git clone https://github.com/tazomatalax/context-engineering.git
@@ -19,6 +27,29 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
+
+# Show deprecation warning
+echo -e "${YELLOW}"
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║           ⚠️  DEPRECATION WARNING ⚠️                        ║"
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║                                                            ║"
+echo "║  This bash installer is deprecated and will be removed     ║"
+echo "║  in a future version.                                      ║"
+echo "║                                                            ║"
+echo "║  Please use modern package managers instead:               ║"
+echo "║                                                            ║"
+echo "║  Python:  uvx context-engineering-installer                ║"
+echo "║  Node.js: npx context-engineering-installer                ║"
+echo "║                                                            ║"
+echo "║  Benefits: Faster, more secure, cross-platform            ║"
+echo "║                                                            ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+echo ""
+echo -e "${GRAY}Continuing with legacy installer in 3 seconds...${NC}"
+sleep 3
+echo ""
 
 # Runtime selection (default to node for backward compatibility)
 RUNTIME="${RUNTIME:-node}"
@@ -303,7 +334,7 @@ main() {
     echo "4. Configure validate.sh for your project type"
     echo ""
     info "Installation complete! You can now use /create-task in Claude Code"
-    echo -e "${GRAY}To uninstall: rm -rf .claude PRPs scripts validate.sh AI_RULES.md advanced_tools.md${NC}"
+    echo -e "${GRAY}To uninstall: rm -rf .claude PRPs scripts validate.sh AI_RULES.md advanced_tools.md .env${NC}"
 }
 
 # Handle help and uninstall flags

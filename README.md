@@ -16,33 +16,58 @@
 
 ### 1. Install the Toolkit
 
-**Option A: Universal Installation (No Node.js required)**
+**Choose your runtime:**
+
 ```bash
-# Navigate to your existing project
-cd your-existing-project
+# Python runtime (recommended - no Node.js required)
+uvx context-engineering-installer
 
-# Install using universal script
-curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
-
-# OR clone and run locally:
-git clone https://github.com/tazomatalax/context-engineering.git
-cd context-engineering && ./install.sh
-```
-
-**Option B: NPX Installation (Node.js required)**
-```bash
-# Navigate to your existing project
-cd your-existing-project
-
-# Install Context Engineering toolkit
+# Node.js runtime
 npx context-engineering-installer
 ```
 
-**Both methods then require:**
+Both installers will:
+- Prompt you to confirm runtime choice
+- Copy all necessary files to your project
+- Set up `.claude/commands/` for Claude Code  
+- Create `.env.example` for GitHub integration
+
+**Environment variable override:**
 ```bash
-# Configure environment
+# Force a specific runtime without prompting
+RUNTIME=python npx context-engineering-installer
+RUNTIME=node npx context-engineering-installer
+```
+
+**Note:** You must run this from within a git repository.
+
+**Option B: Legacy bash installer (deprecated)**
+```bash
+# This method is deprecated and will be removed in future versions
+curl -fsSL https://raw.githubusercontent.com/tazomatalax/context-engineering/main/install.sh | bash
+```
+
+### 2. Configure Environment
+
+```bash
+# Copy and edit environment file
 cp .env.example .env
-# Edit .env with your GitHub credentials
+# Edit .env with your GitHub credentials:
+#   GITHUB_TOKEN=your_github_personal_access_token
+#   GITHUB_REPO=owner/repo-name
+```
+
+### 3. Install Runtime Dependencies
+
+**For Python runtime:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv pip install requests
+```
+
+**For Node.js runtime:**
+```bash
+npm install @octokit/rest dotenv
 ```
 
 ### 2. Draft a Plan from an Idea
@@ -54,11 +79,17 @@ cp .env.example .env
 
 This creates a detailed plan in `temp/task-draft-{timestamp}.md`.
 
-### 3. Finalize and Post the Plan
+### 3. Review and Post the Plan
 
 ```bash
 # Review and edit the draft file, then post it to GitHub
-node scripts/post-issue.js temp/task-draft-{...}.md
+# Commands auto-detected based on installed runtime:
+
+# Python runtime:
+uv run scripts/post_issue.py temp/task-draft-{timestamp}.md
+
+# Node.js runtime:
+node scripts/post-issue.cjs temp/task-draft-{timestamp}.md
 ```
 
 ### 4. Start the Task

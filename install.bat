@@ -1,8 +1,16 @@
 @echo off
 REM Context Engineering Universal Installer for Windows
-REM Works without Node.js/npm dependency
 REM
-REM USAGE:
+REM *** DEPRECATION NOTICE ***
+REM This batch installer is deprecated and will be removed in a future version.
+REM
+REM Please use the modern package manager installers instead:
+REM   - Python: uvx context-engineering-installer
+REM   - Node.js: npx context-engineering-installer
+REM
+REM These are faster, more secure, and cross-platform.
+REM
+REM LEGACY USAGE (still works for now):
 REM   install.bat
 REM   git clone https://github.com/tazomatalax/context-engineering.git && cd context-engineering && install.bat
 
@@ -15,6 +23,27 @@ set "BLUE=[94m"
 set "YELLOW=[93m"
 set "GRAY=[37m"
 set "NC=[0m"
+
+echo.
+echo %YELLOW%╔════════════════════════════════════════════════════════════╗%NC%
+echo %YELLOW%║           ⚠️  DEPRECATION WARNING ⚠️                        ║%NC%
+echo %YELLOW%╔════════════════════════════════════════════════════════════╝%NC%
+echo %YELLOW%║                                                            ║%NC%
+echo %YELLOW%║  This batch installer is deprecated and will be removed    ║%NC%
+echo %YELLOW%║  in a future version.                                      ║%NC%
+echo %YELLOW%║                                                            ║%NC%
+echo %YELLOW%║  Please use modern package managers instead:               ║%NC%
+echo %YELLOW%║                                                            ║%NC%
+echo %YELLOW%║  Python:  uvx context-engineering-installer                ║%NC%
+echo %YELLOW%║  Node.js: npx context-engineering-installer                ║%NC%
+echo %YELLOW%║                                                            ║%NC%
+echo %YELLOW%║  Benefits: Faster, more secure, cross-platform            ║%NC%
+echo %YELLOW%║                                                            ║%NC%
+echo %YELLOW%╚════════════════════════════════════════════════════════════╝%NC%
+echo.
+echo %GRAY%Continuing with legacy installer in 3 seconds...%NC%
+timeout /t 3 /nobreak >nul
+echo.
 
 echo %BLUE%  ╭─────────────────────────────────────────╮%NC%
 echo %BLUE%  │   Context Engineering Universal Setup   │%NC%

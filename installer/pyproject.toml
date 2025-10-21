@@ -1,0 +1,50 @@
+[project]
+name = "context-engineering-installer"
+version = "1.5.0"
+description = "Installer for the Context Engineering toolkit - systematic AI coding workflows"
+authors = [
+    {name = "Context Engineering Community", email = "hello@contextengineering.dev"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+keywords = ["context-engineering", "ai-workflow", "github-automation", "claude-code", "installer"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+
+[project.urls]
+Homepage = "https://github.com/tazomatalax/context-engineering"
+Repository = "https://github.com/tazomatalax/context-engineering"
+Issues = "https://github.com/tazomatalax/context-engineering/issues"
+
+[project.scripts]
+context-engineering-installer = "install:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+include = [
+    "install.py",
+    "toolkit/**/*",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "install.py",
+    "toolkit/**/*",
+    "README.md",
+    "pyproject.toml",
+]
