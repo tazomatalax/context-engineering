@@ -10,9 +10,9 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "postbuild": "npm run bundle",
-    "bundle": "npx ts-node --esm scripts/bundle.ts",
+    "bundle": "node --loader ts-node/esm scripts/bundle.ts",
     "start": "node dist/index.js",
-    "dev": "npx ts-node --esm src/index.tsx",
+    "dev": "node --loader ts-node/esm src/index.tsx",
     "clean": "rimraf dist assets",
     "prepublishOnly": "npm run clean && npm run build"
   },
