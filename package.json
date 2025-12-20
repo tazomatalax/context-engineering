@@ -1,6 +1,6 @@
 {
   "name": "@context-engineering/cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Context Engineering CLI - Interactive AI Asset Manager for Skills, Agents, Commands, and MCP Servers",
   "main": "cli/dist/index.js",
   "bin": {
