@@ -4,19 +4,14 @@ An interactive CLI and framework for setting up AI-ready projects with pre-confi
 
 ## 🚀 Installation
 
-### Option 1: NPX (Recommended for Node.js users)
+### Global Install (Recommended)
 ```bash
-npx context-engineering-installer
+npm install -g @context-engineering/cli
 ```
 
-### Option 2: UV (Recommended for Python users)
+### Run via NPX
 ```bash
-uvx context-engineering-installer
-```
-
-### Option 3: Manual Setup
-```powershell
-./setup.ps1
+npx @context-engineering/cli
 ```
 
 ## 🛠️ Features
@@ -36,17 +31,21 @@ uvx context-engineering-installer
 .vscode/
   mcp.json      # MCP Server configuration
 cli/            # The interactive TUI application
-src/            # Python wrapper for UV support
 AGENTS.md       # Core rules for AI assistants
+EXTENDING.md    # Guide for adding new assets
 README.md       # This file
 ```
 
 ## 🤖 Usage
 
-1.  **Run the CLI** using one of the installation methods above.
+1.  **Run the CLI**: `context-cli` (if installed globally) or `npx @context-engineering/cli`.
 2.  **Browse Assets**: Use the interactive TUI to explore available skills and agents.
 3.  **Install**: Select an asset to install it into your current project.
 4.  **Configure MCP**: Add servers like `Context7` or `GitHub` to your `.vscode/mcp.json`.
+
+## ➕ Adding New Assets
+
+Want to add your own Skills, Agents, or MCP Servers? See [EXTENDING.md](EXTENDING.md) for a complete guide.
 
 ## 📝 License
 
