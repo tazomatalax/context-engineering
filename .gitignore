@@ -1,42 +1,23 @@
-venv
-venv_linux
-__pycache__
-.ruff_cache
-.pytest_cache
-
-# Node.js
-.env
-node_modules/
-*.log
+# General
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
+*.log
+*.tmp
+*.temp
+
+# Environment
+.env
+venv/
+__pycache__/
+.pytest_cache/
+node_modules/
 dist/
 build/
 coverage/
-*.tmp
-*.temp
-.git/
-.claude/settings.local.json
 
-# Context Engineering Toolkit - Deployed Files
-# Ignore most deployed files to avoid duplication with installer/toolkit/
-# But keep templates that are useful for this project
-
-# Claude commands (work on source in installer/toolkit/ instead)
-/.claude/commands/
-
-# User-specific configuration
-/.env.example
-/AI_RULES.md
-/validate.sh
-/advanced_tools.md
-
-# Active work directories  
-/PRPs/active/
-/scripts/
-/temp/
-
-# Note: Keep .github/ templates and PRPs/templates/ as they're useful for this project
-# Work on source files in installer/toolkit/ for toolkit improvements
+# IDE
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/mcp.json
+!.vscode/extensions.json

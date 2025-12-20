@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@octokit/rest": "^19.0.13",
-    "dotenv": "^17.2.2"
-  }
-}
