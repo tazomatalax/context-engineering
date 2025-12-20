@@ -186,10 +186,10 @@ const App: React.FC = () => {
           <SelectInput
             items={categoryItems}
             onSelect={handleCategorySelect}
-            indicatorComponent={({ isSelected }: { isSelected: boolean }) => (
+            indicatorComponent={({ isSelected }: { isSelected?: boolean }) => (
               <Text color={THEME.primary}>{isSelected ? '▶ ' : '  '}</Text>
             )}
-            itemComponent={({ isSelected, label }: { isSelected: boolean; label: string }) => (
+            itemComponent={({ isSelected, label }: { isSelected?: boolean; label: string }) => (
               <Text color={isSelected ? THEME.secondary : undefined} bold={isSelected}>
                 {label}
               </Text>
@@ -224,10 +224,10 @@ const App: React.FC = () => {
               items={listItems}
               onSelect={handleItemSelect}
               limit={10}
-              indicatorComponent={({ isSelected }: { isSelected: boolean }) => (
+              indicatorComponent={({ isSelected }: { isSelected?: boolean }) => (
                 <Text color={THEME.primary}>{isSelected ? '▶ ' : '  '}</Text>
               )}
-              itemComponent={({ isSelected, label }: { isSelected: boolean; label: string }) => (
+              itemComponent={({ isSelected, label }: { isSelected?: boolean; label: string }) => (
                 <Text color={isSelected ? THEME.primary : undefined} bold={isSelected}>
                   {label}
                 </Text>
