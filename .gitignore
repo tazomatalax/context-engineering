@@ -4,7 +4,7 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
-
+temp/
 # Environment
 .env
 venv/

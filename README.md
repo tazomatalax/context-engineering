@@ -1,45 +1,52 @@
-# AI Project Template
+# Context Engineering Toolkit
 
-A minimal, lightweight template for setting up AI-ready projects with pre-configured MCP servers and GitHub Skills.
+An interactive CLI and framework for setting up AI-ready projects with pre-configured MCP servers, Skills, and Agents.
 
-## 🚀 Features
+## 🚀 Installation
 
-- **MCP Configuration**: Pre-configured `.vscode/mcp.json` for Model Context Protocol servers (Context7, Chrome DevTools, GitHub, Perplexity).
-- **GitHub Skills**: A collection of skills in `.github/skills` to enhance AI capabilities.
-- **AI Rules**: `AI_RULES.md` to guide AI assistants in maintaining code quality and consistency.
-- **Claude Ready**: `CLAUDE.md` configuration for optimal interaction with Claude.
+### Option 1: NPX (Recommended for Node.js users)
+```bash
+npx context-engineering-installer
+```
+
+### Option 2: UV (Recommended for Python users)
+```bash
+uvx context-engineering-installer
+```
+
+### Option 3: Manual Setup
+```powershell
+./setup.ps1
+```
+
+## 🛠️ Features
+
+- **Interactive CLI**: Browse and install AI assets (Skills, Agents, Commands) directly into your project.
+- **MCP Management**: Easily add and configure Model Context Protocol servers.
+- **Pre-configured Assets**: A collection of "gold-standard" prompts and agents for common development tasks.
+- **Project Context**: Tools to help AI assistants understand your project's unique patterns and rules.
 
 ## 📂 Structure
 
 ```
 .github/
-  skills/       # AI Skills and prompts
+  skills/       # Reusable AI skill prompts
+  agents/       # Autonomous AI agent definitions
+  commands/     # Slash commands for quick actions
 .vscode/
   mcp.json      # MCP Server configuration
-  settings.json # VS Code settings
-AI_RULES.md     # Rules for AI assistants
-CLAUDE.md       # Claude-specific configuration
+cli/            # The interactive TUI application
+src/            # Python wrapper for UV support
+AGENTS.md       # Core rules for AI assistants
 README.md       # This file
 ```
 
-## 🛠️ Usage
+## 🤖 Usage
 
-1.  **Clone this repository** to start a new project.
-2.  **Update `.vscode/mcp.json`**:
-    *   Add your `GITHUB_PERSONAL_ACCESS_TOKEN` to the `github` server configuration.
-    *   Add or remove servers as needed.
-3.  **Explore `.github/skills`**:
-    *   Review the available skills and customize them for your project.
-4.  **Start coding!**
-
-## 🤖 MCP Servers
-
-This template includes configuration for:
-
-*   **Context7**: Up-to-date library documentation.
-*   **Chrome DevTools**: Browser automation and inspection.
-*   **GitHub**: Interact with GitHub repositories, issues, and PRs.
-*   **Perplexity**: Web search and research.
+1.  **Run the CLI** using one of the installation methods above.
+2.  **Browse Assets**: Use the interactive TUI to explore available skills and agents.
+3.  **Install**: Select an asset to install it into your current project.
+4.  **Configure MCP**: Add servers like `Context7` or `GitHub` to your `.vscode/mcp.json`.
 
 ## 📝 License
 

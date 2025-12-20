@@ -1,0 +1,50 @@
+{
+  "name": "@context-engineering/cli",
+  "version": "2.0.0",
+  "description": "Interactive CLI for browsing and installing Context Engineering assets (Skills, Agents, Commands, MCP Servers)",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "context-cli": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "postbuild": "npm run bundle",
+    "bundle": "npx ts-node --esm scripts/bundle.ts",
+    "start": "node dist/index.js",
+    "dev": "npx ts-node --esm src/index.tsx",
+    "clean": "rimraf dist assets",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "cli",
+    "context-engineering",
+    "ai",
+    "agents",
+    "mcp",
+    "copilot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "ink": "^5.1.0",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "meow": "^13.2.0",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

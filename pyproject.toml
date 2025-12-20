@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "context-engineering-installer"
+version = "2.0.0"
+description = "Context Engineering CLI - Interactive AI Asset Manager"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Tasman", email = "tazomatalax@hotmail.com"}
+]
+keywords = [
+    "context-engineering",
+    "ai-workflow",
+    "github-automation",
+    "claude-code",
+    "installer",
+    "uv"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities"
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/tazomatalax/context-engineering"
+Repository = "https://github.com/tazomatalax/context-engineering.git"
+
+[project.scripts]
+context-engineering-installer = "context_installer.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/context_installer"]
+artifacts = [
+    "cli/dist",
+    "cli/assets"
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/cli/dist",
+    "/cli/assets",
+    "/README.md",
+    "/LICENSE"
+]
