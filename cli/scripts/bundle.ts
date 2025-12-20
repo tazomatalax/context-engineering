@@ -98,14 +98,14 @@ async function bundle(): Promise<void> {
       await fs.copy(mcpSource, path.join(DIST_ASSETS, 'mcp.json'));
       await fs.copy(mcpSource, path.join(DEV_ASSETS, 'mcp.json'));
       
-      // Count MCP servers - just count top-level "key": patterns after "servers"
+      // Count MCP servers by parsing JSON
       const content = await fs.readFile(mcpSource, 'utf-8');
-      const serversMatch = content.match(/"servers"\s*:\s*\{([^]*)\}/);
-      if (serversMatch) {
-        // Count keys by finding patterns like "key":
-        const serverKeys = serversMatch[1].match(/"[^"]+"\s*:\s*\{/g) || [];
-        results.push({ type: 'mcp', count: serverKeys.length, success: true });
-      } else {
+      try {
+        const mcp = parseJsonc(content) as { servers?: Record<string, unknown> };
+        const count = mcp.servers ? Object.keys(mcp.servers).length : 0;
+        results.push({ type: 'mcp', count, success: true });
+      } catch (e) {
+        console.warn('Failed to count MCP servers:', e);
         results.push({ type: 'mcp', count: 0, success: true });
       }
     } else {
