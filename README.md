@@ -6,12 +6,12 @@ An interactive CLI and framework for setting up AI-ready projects with pre-confi
 
 ### Global Install (Recommended)
 ```bash
-npm install -g @context-engineering/cli
+npm install -g context-engineering-installer
 ```
 
 ### Run via NPX
 ```bash
-npx @context-engineering/cli
+npx context-engineering-installer
 ```
 
 ## 🛠️ Features
