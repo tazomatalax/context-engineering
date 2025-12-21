@@ -16,10 +16,10 @@ The CLI aggregates assets from the following locations in the repository:
 Skills are reusable prompts for specific tasks (e.g., "Generate Unit Tests", "Refactor Code").
 
 1.  Create a new folder: `.github/skills/<skill-name>/`
-2.  Add a `prompt.md` file containing the prompt text.
-3.  (Optional) Add a `README.md` with usage instructions.
+2.  Add a `SKILL.md` file with YAML frontmatter (`name`, `description`) and markdown instructions.
+3.  (Optional) Add `scripts/`, `references/`, or `assets/` subfolders for bundled resources.
 
-**Example:** `.github/skills/generate-tests/prompt.md`
+**Example:** `.github/skills/svg/SKILL.md`
 
 ## 🕵️ Adding an Agent
 

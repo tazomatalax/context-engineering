@@ -1,6 +1,6 @@
 {
   "name": "context-engineering-installer",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Interactive CLI for browsing and installing Context Engineering assets (Skills, Agents, Commands, MCP Servers)",
   "type": "module",
   "main": "dist/index.js",

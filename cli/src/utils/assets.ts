@@ -228,8 +228,8 @@ export async function getAssetContent(type: AssetType, name: string): Promise<st
       return await fs.readFile(path.join(itemPath, readmeFile), 'utf-8');
     }
 
-    // Try to find and return the main file (instructions.md, prompt.md, etc.)
-    const mainFiles = ['instructions.md', 'prompt.md', 'index.md', 'main.md'];
+    // Try to find and return the main file (SKILL.md, instructions.md, prompt.md, etc.)
+    const mainFiles = ['SKILL.md', 'instructions.md', 'prompt.md', 'index.md', 'main.md'];
     for (const mainFile of mainFiles) {
       if (files.some((f: string) => f.toLowerCase() === mainFile.toLowerCase())) {
         return await fs.readFile(path.join(itemPath, mainFile), 'utf-8');
