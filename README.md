@@ -38,10 +38,19 @@ README.md       # This file
 
 ## 🤖 Usage
 
-1.  **Run the CLI**: `context-cli` (if installed globally) or `npx @context-engineering/cli`.
+1.  **Run the CLI**: `context-cli` (if installed globally) or `npx context-engineering-installer`.
 2.  **Browse Assets**: Use the interactive TUI to explore available skills and agents.
 3.  **Install**: Select an asset to install it into your current project.
 4.  **Configure MCP**: Add servers like `Context7` or `GitHub` to your `.vscode/mcp.json`.
+
+## Images
+
+<img width="541" height="405" alt="image" src="https://github.com/user-attachments/assets/48d6a72c-14c7-426a-a5da-2a85cf390646" />
+
+<img width="558" height="537" alt="image" src="https://github.com/user-attachments/assets/2b17941d-8a7d-4d93-bf1c-e431986cc80f" />
+
+<img width="696" height="717" alt="image" src="https://github.com/user-attachments/assets/127d6cd0-9f89-42df-9ed7-2816f5de0158" />
+
 
 ## ➕ Adding New Assets
 
