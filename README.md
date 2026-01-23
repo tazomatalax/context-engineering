@@ -43,6 +43,14 @@ README.md       # This file
 3.  **Install**: Select an asset to install it into your current project.
 4.  **Configure MCP**: Add servers like `Context7` or `GitHub` to your `.vscode/mcp.json`.
 
+OpenCode MCP servers
+
+- This repository includes an `opencode.json` listing local and remote MCP servers (mirrored from `.vscode/mcp.json`) so OpenCode can discover the same tools. You can enable/disable servers there and provide any required environment variables (for example `PERPLEXITY_API_KEY`).
+
+VS Code Copilot
+
+- For VS Code Copilot compatibility the project provides recommended settings in `.vscode/settings.json`.
+
 ## Images
 
 <img width="541" height="405" alt="image" src="https://github.com/user-attachments/assets/48d6a72c-14c7-426a-a5da-2a85cf390646" />

@@ -5,25 +5,64 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// cli/scripts -> cli -> context-engineering (project root)
 const ROOT = path.resolve(__dirname, '../..');
 const CLI_ROOT = path.resolve(__dirname, '..');
 const DIST_ASSETS = path.join(CLI_ROOT, 'dist', 'assets');
 const DEV_ASSETS = path.join(CLI_ROOT, 'assets');
 
-/**
- * Parse JSONC (JSON with comments and trailing commas)
- */
+interface VsCodeMcpServer {
+  type: 'stdio' | 'http';
+  command?: string;
+  args?: string[];
+  url?: string;
+  env?: Record<string, string>;
+  gallery?: string;
+  version?: string;
+}
+
+interface VsCodeMcpConfig {
+  servers: Record<string, VsCodeMcpServer>;
+}
+
+interface OpenCodeMcpServer {
+  type: 'local' | 'remote';
+  command?: string[];
+  url?: string;
+  environment?: Record<string, string>;
+  oauth?: Record<string, unknown>;
+  enabled: boolean;
+}
+
+interface OpenCodeMcpConfig {
+  $schema: string;
+  mcp: Record<string, OpenCodeMcpServer>;
+}
+
 function parseJsonc(content: string): unknown {
-  // Normalize line endings
   let cleaned = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  // Remove single-line comments (careful not to match // in URLs)
   cleaned = cleaned.replace(/(^|\s)\/\/.*$/gm, '$1');
-  // Remove multi-line comments
   cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
-  // Remove trailing commas before } or ]
   cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
   return JSON.parse(cleaned);
+}
+
+function convertVsCodeMcpToOpenCode(mcpServer: VsCodeMcpServer): OpenCodeMcpServer {
+  const serverType = mcpServer.type === 'stdio' ? 'local' : mcpServer.type === 'http' ? 'remote' : 'local';
+  
+  return {
+    type: serverType,
+    ...(mcpServer.command && mcpServer.args && {
+      command: [mcpServer.command, ...mcpServer.args]
+    }),
+    ...(mcpServer.url && { url: mcpServer.url }),
+    ...(mcpServer.env && {
+      environment: Object.fromEntries(
+        Object.entries(mcpServer.env).map(([k, v]) => [k, `{env:${k}}`])
+      )
+    }),
+    ...(mcpServer.gallery && { gallery: mcpServer.gallery }),
+    enabled: true
+  };
 }
 
 interface BundleResult {
@@ -47,7 +86,6 @@ async function copyAssetFolder(
     await fs.copy(source, dest, { 
       overwrite: true,
       filter: (src) => {
-        // Skip hidden files and node_modules
         const basename = path.basename(src);
         return !basename.startsWith('.') && basename !== 'node_modules';
       }
@@ -73,39 +111,48 @@ async function bundle(): Promise<void> {
 
   const results: BundleResult[] = [];
 
-  // Ensure directories exist
   await fs.ensureDir(DIST_ASSETS);
   await fs.ensureDir(DEV_ASSETS);
 
-  // Copy .github asset folders
   const githubDir = path.join(ROOT, '.github');
   const assetTypes = ['skills', 'agents', 'commands'];
 
   for (const type of assetTypes) {
     const source = path.join(githubDir, type);
     
-    // Copy to both dist and dev assets
     const distResult = await copyAssetFolder(source, path.join(DIST_ASSETS, type), type);
     await copyAssetFolder(source, path.join(DEV_ASSETS, type), type);
     
     results.push(distResult);
   }
 
-  // Copy MCP config
   const mcpSource = path.join(ROOT, '.vscode/mcp.json');
   try {
     if (await fs.pathExists(mcpSource)) {
       await fs.copy(mcpSource, path.join(DIST_ASSETS, 'mcp.json'));
       await fs.copy(mcpSource, path.join(DEV_ASSETS, 'mcp.json'));
       
-      // Count MCP servers by parsing JSON
       const content = await fs.readFile(mcpSource, 'utf-8');
       try {
-        const mcp = parseJsonc(content) as { servers?: Record<string, unknown> };
+        const mcp = parseJsonc(content) as VsCodeMcpConfig;
         const count = mcp.servers ? Object.keys(mcp.servers).length : 0;
-        results.push({ type: 'mcp', count, success: true });
+        results.push({ type: 'mcp (VS Code)', count, success: true });
+        
+        const openCodeConfig: OpenCodeMcpConfig = {
+          $schema: 'https://opencode.ai/config.json',
+          mcp: {}
+        };
+        
+        for (const [name, server] of Object.entries(mcp.servers || {})) {
+          openCodeConfig.mcp[name] = convertVsCodeMcpToOpenCode(server);
+        }
+        
+        await fs.writeJson(path.join(DIST_ASSETS, 'opencode.json'), openCodeConfig, { spaces: 2 });
+        await fs.writeJson(path.join(DEV_ASSETS, 'opencode.json'), openCodeConfig, { spaces: 2 });
+        
+        results.push({ type: 'mcp (OpenCode)', count, success: true });
       } catch (e) {
-        console.warn('Failed to count MCP servers:', e);
+        console.warn('Failed to parse MCP config:', e);
         results.push({ type: 'mcp', count: 0, success: true });
       }
     } else {
@@ -120,7 +167,6 @@ async function bundle(): Promise<void> {
     });
   }
 
-  // Copy core templates
   const templates = [
     { src: 'AGENTS.md', dest: 'AGENTS.md', root: ROOT },
     { src: 'context/setup.ps1', dest: 'setup.ps1', root: ROOT }
@@ -144,7 +190,6 @@ async function bundle(): Promise<void> {
     }
   }
 
-  // Print results
   console.log('📦 Bundle Results:\n');
   
   let totalItems = 0;

@@ -5,29 +5,15 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve assets directory - works in both dev and production
-const resolveAssetsDir = (): string => {
-  // Try multiple potential locations
-  const candidates: string[] = [
-    path.join(__dirname, '../../assets'),      // dist/src/utils -> dist/assets
-    path.join(__dirname, '../assets'),         // dist/utils -> dist/assets
-    path.join(__dirname, '../../../assets'),   // Development: src/utils -> cli/assets
-    path.join(process.cwd(), 'cli/assets'),    // CWD fallback
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  // Default to first candidate (will show helpful error if missing)
-  return candidates[0];
-};
-
 const ASSETS_DIR = resolveAssetsDir();
 
+export type Platform = 'github' | 'opencode';
 export type AssetType = 'skills' | 'agents' | 'commands' | 'mcp';
+
+export interface InstallOptions {
+  platform: Platform;
+  targetDir: string;
+}
 
 export interface AssetMetadata {
   name: string;
@@ -38,16 +24,72 @@ export interface AssetMetadata {
   size?: number;
 }
 
-/**
- * Clean JSONC (JSON with Comments) content for parsing
- * Handles: single-line comments, multi-line comments, trailing commas, control characters
- * Preserves // inside quoted strings (like URLs)
- */
+interface VsCodeMcpServer {
+  type: 'stdio' | 'http';
+  command?: string;
+  args?: string[];
+  url?: string;
+  env?: Record<string, string>;
+  gallery?: string;
+  version?: string;
+}
+
+interface VsCodeMcpConfig {
+  servers: Record<string, VsCodeMcpServer>;
+}
+
+interface OpenCodeMcpServer {
+  type: 'local' | 'remote';
+  command?: string[];
+  url?: string;
+  environment?: Record<string, string>;
+  oauth?: Record<string, unknown>;
+  enabled: boolean;
+}
+
+interface OpenCodeMcpConfig {
+  $schema: string;
+  mcp: Record<string, OpenCodeMcpServer>;
+  agent?: Record<string, unknown>;
+  permission?: Record<string, unknown>;
+  command?: Record<string, unknown>;
+}
+
+const PLATFORM_PATHS: Record<Platform, Record<AssetType, (dir: string, name?: string) => string>> = {
+  github: {
+    skills: (dir, name) => path.join(dir, '.github', 'skills', name || ''),
+    agents: (dir, name) => path.join(dir, '.github', 'agents', `${name}.md`),
+    commands: (dir, name) => path.join(dir, '.github', 'commands', name || ''),
+    mcp: (dir) => path.join(dir, '.vscode', 'mcp.json')
+  },
+  opencode: {
+    skills: (dir, name) => path.join(dir, '.opencode', 'skills', name || ''),
+    agents: (dir, name) => path.join(dir, '.opencode', 'agents', `${name}.md`),
+    commands: (dir, name) => path.join(dir, '.opencode', 'commands', `${name}.md`),
+    mcp: (dir) => path.join(dir, 'opencode.json')
+  }
+};
+
+function resolveAssetsDir(): string {
+  const candidates: string[] = [
+    path.join(__dirname, '../../assets'),
+    path.join(__dirname, '../assets'),
+    path.join(__dirname, '../../../assets'),
+    path.join(process.cwd(), 'cli/assets'),
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+}
+
 function cleanJsonc(content: string): string {
-  // First, remove control characters except newlines and tabs
   let cleaned = content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   
-  // To safely remove comments without affecting strings, we process character by character
   let result = '';
   let inString = false;
   let inSingleLineComment = false;
@@ -58,14 +100,12 @@ function cleanJsonc(content: string): string {
     const char = cleaned[i];
     const nextChar = cleaned[i + 1];
     
-    // Handle escape sequences in strings
     if (inString && char === '\\' && i + 1 < cleaned.length) {
       result += char + nextChar;
       i += 2;
       continue;
     }
     
-    // Toggle string mode on unescaped quotes
     if (char === '"' && !inSingleLineComment && !inMultiLineComment) {
       inString = !inString;
       result += char;
@@ -73,24 +113,21 @@ function cleanJsonc(content: string): string {
       continue;
     }
     
-    // Inside a string, just copy characters
     if (inString) {
       result += char;
       i++;
       continue;
     }
     
-    // Check for end of single-line comment
     if (inSingleLineComment) {
       if (char === '\n') {
         inSingleLineComment = false;
-        result += char; // Keep newline for line counting
+        result += char;
       }
       i++;
       continue;
     }
     
-    // Check for end of multi-line comment
     if (inMultiLineComment) {
       if (char === '*' && nextChar === '/') {
         inMultiLineComment = false;
@@ -101,7 +138,6 @@ function cleanJsonc(content: string): string {
       continue;
     }
     
-    // Check for start of comments
     if (char === '/') {
       if (nextChar === '/') {
         inSingleLineComment = true;
@@ -115,18 +151,74 @@ function cleanJsonc(content: string): string {
       }
     }
     
-    // Regular character outside of strings and comments
     result += char;
     i++;
   }
   
-  // Remove trailing commas before } or ]
   return result.replace(/,(\s*[}\]])/g, '$1').trim();
 }
 
-/**
- * List all assets of a given type
- */
+function convertVsCodeMcpToOpenCode(mcpServer: VsCodeMcpServer): OpenCodeMcpServer {
+  const serverType = mcpServer.type === 'stdio' ? 'local' : mcpServer.type === 'http' ? 'remote' : 'local';
+  
+  return {
+    type: serverType,
+    ...(mcpServer.command && mcpServer.args && {
+      command: [mcpServer.command, ...mcpServer.args]
+    }),
+    ...(mcpServer.url && { url: mcpServer.url }),
+    ...(mcpServer.env && {
+      environment: Object.fromEntries(
+        Object.entries(mcpServer.env).map(([k, v]) => [k, `{env:${k}}`])
+      )
+    }),
+    ...(mcpServer.gallery && { gallery: mcpServer.gallery }),
+    enabled: true
+  };
+}
+
+async function convertAgentForOpenCode(sourcePath: string): Promise<string> {
+  const content = await fs.readFile(sourcePath, 'utf-8');
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  
+  if (!frontmatterMatch) return content;
+  
+  let frontmatter = frontmatterMatch[1];
+  const body = content.slice(frontmatterMatch[0].length);
+  
+  frontmatter = frontmatter
+    .replace(/^name:.*$/m, '')
+    .replace(/^category:.*$/m, '')
+    .replace(/^displayName:.*$/m, '')
+    .replace(/^color:.*$/m, '')
+    .replace(/^bundle:.*$/m, '')
+    .replace(/^model:.*$/m, '')
+    .replace(/^tools:.*$/m, 'mode: subagent');
+  
+  frontmatter += '\ntools:\n  read: true\n  write: false\n  edit: false\n  bash: false';
+  
+  return `---\n${frontmatter}---\n${body}`;
+}
+
+async function convertCommandForOpenCode(sourcePath: string): Promise<string> {
+  const content = await fs.readFile(sourcePath, 'utf-8');
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  
+  if (!frontmatterMatch) return content;
+  
+  let frontmatter = frontmatterMatch[1];
+  const body = content.slice(frontmatterMatch[0].length);
+  
+  frontmatter = frontmatter
+    .replace(/^category:.*$/m, '')
+    .replace(/^allowed-tools:.*$/m, '')
+    .replace(/^argument-hint:.*$/m, '')
+    .replace(/^model:.*$/m, '')
+    .replace(/^---\n$/, 'agent: build\n---');
+  
+  return frontmatter + body;
+}
+
 export async function listAssets(type: AssetType): Promise<string[]> {
   if (type === 'mcp') {
     const mcpPath = path.join(ASSETS_DIR, 'mcp.json');
@@ -152,12 +244,10 @@ export async function listAssets(type: AssetType): Promise<string[]> {
   const items: string[] = await fs.readdir(dir);
   return items
     .filter((item: string) => !item.startsWith('.'))
+    .map((item: string) => (type === 'agents' || type === 'commands') && item.endsWith('.md') ? item.slice(0, -3) : item)
     .sort((a: string, b: string) => a.localeCompare(b));
 }
 
-/**
- * Get metadata about an asset
- */
 export async function getAssetMetadata(type: AssetType, name: string): Promise<AssetMetadata> {
   const metadata: AssetMetadata = {
     name,
@@ -182,15 +272,11 @@ export async function getAssetMetadata(type: AssetType, name: string): Promise<A
       metadata.hasReadme = files.some((f: string) => f.toLowerCase() === 'readme.md');
     }
   } catch {
-    // Item doesn't exist or can't be read
   }
 
   return metadata;
 }
 
-/**
- * Get the content of an asset for preview
- */
 export async function getAssetContent(type: AssetType, name: string): Promise<string | object> {
   if (type === 'mcp') {
     const mcpPath = path.join(ASSETS_DIR, 'mcp.json');
@@ -222,13 +308,11 @@ export async function getAssetContent(type: AssetType, name: string): Promise<st
   if (stat.isDirectory()) {
     const files: string[] = await fs.readdir(itemPath);
     
-    // Try to find and return README content
     const readmeFile = files.find((f: string) => f.toLowerCase() === 'readme.md');
     if (readmeFile) {
       return await fs.readFile(path.join(itemPath, readmeFile), 'utf-8');
     }
 
-    // Try to find and return the main file (SKILL.md, instructions.md, prompt.md, etc.)
     const mainFiles = ['SKILL.md', 'instructions.md', 'prompt.md', 'index.md', 'main.md'];
     for (const mainFile of mainFiles) {
       if (files.some((f: string) => f.toLowerCase() === mainFile.toLowerCase())) {
@@ -236,7 +320,6 @@ export async function getAssetContent(type: AssetType, name: string): Promise<st
       }
     }
 
-    // Return directory listing with file info
     const fileList = await Promise.all(
       files.map(async (file: string) => {
         const filePath = path.join(itemPath, file);
@@ -252,78 +335,227 @@ export async function getAssetContent(type: AssetType, name: string): Promise<st
   }
 }
 
-/**
- * Install an asset to the target directory
- */
+async function installMcpForVsCode(name: string, targetDir: string): Promise<void> {
+  const mcpConfig = await getAssetContent('mcp', name) as VsCodeMcpServer;
+  const targetMcpPath = PLATFORM_PATHS.github.mcp(targetDir);
+  
+  await fs.ensureDir(path.dirname(targetMcpPath));
+  
+  let targetMcp: VsCodeMcpConfig = { servers: {} };
+  
+  if (await fs.pathExists(targetMcpPath)) {
+    try {
+      const content = await fs.readFile(targetMcpPath, 'utf-8');
+      const cleanedContent = cleanJsonc(content);
+      targetMcp = JSON.parse(cleanedContent);
+      if (!targetMcp.servers) {
+        targetMcp.servers = {};
+      }
+    } catch {
+      console.warn('Warning: Could not parse existing mcp.json, creating new file');
+      targetMcp = { servers: {} };
+    }
+  }
+
+  if (targetMcp.servers[name]) {
+    console.log(`Updating existing MCP server: ${name}`);
+  }
+
+  targetMcp.servers[name] = mcpConfig;
+  await fs.writeJson(targetMcpPath, targetMcp, { spaces: 2 });
+}
+
+async function installMcpForOpenCode(name: string, targetDir: string): Promise<void> {
+  const mcpConfig = await getAssetContent('mcp', name) as VsCodeMcpServer;
+  const openCodeConfig = convertVsCodeMcpToOpenCode(mcpConfig);
+  const targetPath = PLATFORM_PATHS.opencode.mcp(targetDir);
+  
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  const targetConfig = await readExistingOpenCodeConfig(targetPath);
+  
+  if (targetConfig.mcp[name]) {
+    console.log(`Updating existing MCP server: ${name}`);
+  }
+  
+  targetConfig.mcp[name] = openCodeConfig;
+  await fs.writeJson(targetPath, targetConfig, { spaces: 2 });
+}
+
+async function readExistingOpenCodeConfig(targetPath: string): Promise<OpenCodeMcpConfig> {
+  if (!await fs.pathExists(targetPath)) {
+    return {
+      $schema: 'https://opencode.ai/config.json',
+      mcp: {}
+    };
+  }
+  
+  try {
+    return await fs.readJson(targetPath);
+  } catch {
+    try {
+      const content = await fs.readFile(targetPath, 'utf-8');
+      const parsed = JSON.parse(content);
+      return {
+        $schema: 'https://opencode.ai/config.json',
+        mcp: parsed.mcp || {},
+        ...(parsed.agent && { agent: parsed.agent }),
+        ...(parsed.permission && { permission: parsed.permission }),
+        ...(parsed.command && { command: parsed.command })
+      };
+    } catch {
+      return {
+        $schema: 'https://opencode.ai/config.json',
+        mcp: {}
+      };
+    }
+  }
+}
+
+async function installSkill(name: string, platform: Platform, targetDir: string): Promise<void> {
+  const sourcePath = path.join(ASSETS_DIR, 'skills', name);
+  const targetPath = PLATFORM_PATHS[platform].skills(targetDir, name);
+  
+  if (!await fs.pathExists(sourcePath)) {
+    throw new Error(`Source skill not found: ${name}`);
+  }
+
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  if (await fs.pathExists(targetPath)) {
+    const backupPath = `${targetPath}.backup.${Date.now()}`;
+    await fs.move(targetPath, backupPath);
+    console.log(`Existing asset backed up to: ${backupPath}`);
+  }
+  
+  await fs.copy(sourcePath, targetPath, { overwrite: true });
+}
+
+async function installAgentForGithub(name: string, targetDir: string): Promise<void> {
+  const sourcePath = PLATFORM_PATHS.github.agents(ASSETS_DIR, name + '.md');
+  const targetPath = PLATFORM_PATHS.github.agents(targetDir, name);
+  
+  if (!await fs.pathExists(sourcePath)) {
+    throw new Error(`Source agent not found: ${name}`);
+  }
+
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  if (await fs.pathExists(targetPath)) {
+    const backupPath = `${targetPath}.backup.${Date.now()}`;
+    await fs.move(targetPath, backupPath);
+    console.log(`Existing asset backed up to: ${backupPath}`);
+  }
+  
+  await fs.copy(sourcePath, targetPath, { overwrite: true });
+}
+
+async function installAgentForOpenCode(name: string, targetDir: string): Promise<void> {
+  const sourcePath = path.join(ASSETS_DIR, 'agents', name + '.md');
+  const targetPath = PLATFORM_PATHS.opencode.agents(targetDir, name);
+  
+  if (!await fs.pathExists(sourcePath)) {
+    throw new Error(`Source agent not found: ${name}`);
+  }
+
+  const convertedContent = await convertAgentForOpenCode(sourcePath);
+  
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  if (await fs.pathExists(targetPath)) {
+    const backupPath = `${targetPath}.backup.${Date.now()}`;
+    await fs.move(targetPath, backupPath);
+    console.log(`Existing asset backed up to: ${backupPath}`);
+  }
+  
+  await fs.writeFile(targetPath, convertedContent, 'utf-8');
+}
+
+async function installCommandForGithub(name: string, targetDir: string): Promise<void> {
+  const sourcePath = path.join(ASSETS_DIR, 'commands', name);
+  const targetPath = PLATFORM_PATHS.github.commands(targetDir, name);
+  
+  if (!await fs.pathExists(sourcePath)) {
+    throw new Error(`Source command not found: ${name}`);
+  }
+
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  if (await fs.pathExists(targetPath)) {
+    const backupPath = `${targetPath}.backup.${Date.now()}`;
+    await fs.move(targetPath, backupPath);
+    console.log(`Existing asset backed up to: ${backupPath}`);
+  }
+  
+  await fs.copy(sourcePath, targetPath, { overwrite: true });
+}
+
+async function installCommandForOpenCode(name: string, targetDir: string): Promise<void> {
+  const sourcePath = path.join(ASSETS_DIR, 'commands', name);
+  const targetPath = PLATFORM_PATHS.opencode.commands(targetDir, name);
+  
+  if (!await fs.pathExists(sourcePath)) {
+    throw new Error(`Source command not found: ${name}`);
+  }
+
+  const stat = await fs.stat(sourcePath);
+  
+  await fs.ensureDir(path.dirname(targetPath));
+  
+  if (await fs.pathExists(targetPath)) {
+    const backupPath = `${targetPath}.backup.${Date.now()}`;
+    await fs.move(targetPath, backupPath);
+    console.log(`Existing asset backed up to: ${backupPath}`);
+  }
+  
+  if (stat.isDirectory()) {
+    await fs.copy(sourcePath, targetPath, { overwrite: true });
+  } else {
+    const convertedContent = await convertCommandForOpenCode(sourcePath);
+    await fs.writeFile(targetPath, convertedContent, 'utf-8');
+  }
+}
+
 export async function installAsset(
-  type: AssetType, 
-  name: string, 
-  targetDir: string = process.cwd()
+  type: AssetType,
+  name: string,
+  options: InstallOptions = { platform: 'github', targetDir: process.cwd() }
 ): Promise<void> {
-  // Validate target directory
+  const { platform, targetDir } = options;
+  
   if (!await fs.pathExists(targetDir)) {
     throw new Error(`Target directory does not exist: ${targetDir}`);
   }
 
   if (type === 'mcp') {
-    const mcpConfig = await getAssetContent('mcp', name);
-    const targetMcpPath = path.join(targetDir, '.vscode', 'mcp.json');
-    
-    await fs.ensureDir(path.dirname(targetMcpPath));
-
-    let targetMcp: { servers: Record<string, unknown> } = { servers: {} };
-    
-    if (await fs.pathExists(targetMcpPath)) {
-      try {
-        const content = await fs.readFile(targetMcpPath, 'utf-8');
-        const cleanedContent = cleanJsonc(content);
-        targetMcp = JSON.parse(cleanedContent);
-        if (!targetMcp.servers) {
-          targetMcp.servers = {};
-        }
-      } catch {
-        // If parsing fails, start fresh but warn
-        console.warn('Warning: Could not parse existing mcp.json, creating new file');
-        targetMcp = { servers: {} };
-      }
+    if (platform === 'github') {
+      return await installMcpForVsCode(name, targetDir);
+    } else {
+      return await installMcpForOpenCode(name, targetDir);
     }
+  }
 
-    // Check if server already exists
-    if (targetMcp.servers[name]) {
-      // Merge/update the existing config
-      console.log(`Updating existing MCP server: ${name}`);
+  if (type === 'skills') {
+    return await installSkill(name, platform, targetDir);
+  }
+
+  if (type === 'agents') {
+    if (platform === 'github') {
+      return await installAgentForGithub(name, targetDir);
+    } else {
+      return await installAgentForOpenCode(name, targetDir);
     }
-
-    targetMcp.servers[name] = mcpConfig;
-    await fs.writeJson(targetMcpPath, targetMcp, { spaces: 2 });
-    return;
   }
 
-  const sourcePath = path.join(ASSETS_DIR, type, name);
-  
-  if (!await fs.pathExists(sourcePath)) {
-    throw new Error(`Source asset not found: ${type}/${name}`);
+  if (type === 'commands') {
+    if (platform === 'github') {
+      return await installCommandForGithub(name, targetDir);
+    } else {
+      return await installCommandForOpenCode(name, targetDir);
+    }
   }
-
-  // Determine target path based on asset type
-  const targetSubDir = path.join('.github', type);
-  const targetPath = path.join(targetDir, targetSubDir, name);
-
-  // Check if target already exists
-  if (await fs.pathExists(targetPath)) {
-    // Create backup with timestamp
-    const backupPath = `${targetPath}.backup.${Date.now()}`;
-    await fs.move(targetPath, backupPath);
-    console.log(`Existing asset backed up to: ${backupPath}`);
-  }
-
-  await fs.ensureDir(path.dirname(targetPath));
-  await fs.copy(sourcePath, targetPath, { overwrite: true });
 }
 
-/**
- * Check if assets directory is properly configured
- */
 export function validateAssetsDirectory(): { valid: boolean; path: string; error?: string } {
   const exists = fs.existsSync(ASSETS_DIR);
   return {

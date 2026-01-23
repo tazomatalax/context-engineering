@@ -3,7 +3,7 @@ import React from 'react';
 import { render } from 'ink';
 import meow from 'meow';
 import App from './app.js';
-import { validateAssetsDirectory, listAssets, installAsset, AssetType } from './utils/assets.js';
+import { validateAssetsDirectory, listAssets, installAsset, AssetType, Platform } from './utils/assets.js';
 
 const cli = meow(`
   Context Engineering CLI - Browse and install AI assets
@@ -20,15 +20,17 @@ const cli = meow(`
     mcp       - Model Context Protocol servers
 
   Options
-    --target, -t  Target directory for installation (default: current directory)
-    --help        Show this help message
-    --version     Show version number
+    --target, -t     Target directory for installation (default: current directory)
+    --platform, -p    Target platform: github | opencode (default: github)
+    --help           Show this help message
+    --version        Show version number
 
   Examples
     $ context-cli
     $ context-cli list skills
     $ context-cli install agents code-review-expert
     $ context-cli install mcp context7 --target ./my-project
+    $ context-cli install skills algorithmic-art --platform opencode
 `, {
   importMeta: import.meta,
   flags: {
@@ -36,6 +38,11 @@ const cli = meow(`
       type: 'string',
       shortFlag: 't',
       default: process.cwd(),
+    },
+    platform: {
+      type: 'string',
+      shortFlag: 'p',
+      default: 'github',
     },
   },
 });
@@ -64,7 +71,7 @@ async function runListCommand(type: string): Promise<void> {
   }
 }
 
-async function runInstallCommand(type: string, name: string, targetDir: string): Promise<void> {
+async function runInstallCommand(type: string, name: string, targetDir: string, platform: string): Promise<void> {
   const validTypes: AssetType[] = ['skills', 'agents', 'commands', 'mcp'];
   
   if (!validTypes.includes(type as AssetType)) {
@@ -78,16 +85,27 @@ async function runInstallCommand(type: string, name: string, targetDir: string):
     process.exit(1);
   }
 
+  const selectedPlatform: Platform = platform === 'opencode' ? 'opencode' : 'github';
+
   try {
-    console.log(`Installing ${type}/${name}...`);
-    await installAsset(type as AssetType, name, targetDir);
+    console.log(`Installing ${type}/${name} for ${selectedPlatform}...`);
+    await installAsset(type as AssetType, name, { platform: selectedPlatform, targetDir });
     console.log(`✔ Successfully installed ${name}`);
     
     if (type === 'mcp') {
-      console.log(`  → Added to .vscode/mcp.json`);
-      console.log(`  → Restart VS Code to activate`);
+      if (selectedPlatform === 'opencode') {
+        console.log(`  → Added to opencode.json`);
+        console.log(`  → Restart OpenCode to activate`);
+      } else {
+        console.log(`  → Added to .vscode/mcp.json`);
+        console.log(`  → Restart VS Code to activate`);
+      }
     } else {
-      console.log(`  → Installed to .github/${type}/${name}`);
+      if (selectedPlatform === 'opencode') {
+        console.log(`  → Installed to .opencode/${type}/${name}`);
+      } else {
+        console.log(`  → Installed to .github/${type}/${name}`);
+      }
     }
   } catch (err) {
     console.error(`✘ Error installing ${name}:`, err instanceof Error ? err.message : err);
@@ -96,7 +114,6 @@ async function runInstallCommand(type: string, name: string, targetDir: string):
 }
 
 async function runInteractive(): Promise<void> {
-  // Check terminal capabilities
   if (!process.stdin.isTTY) {
     console.error('Interactive mode requires a TTY terminal.');
     console.error('Use "context-cli list <type>" or "context-cli install <type> <name>" instead.');
@@ -107,11 +124,10 @@ async function runInteractive(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  // Validate assets directory
   const validation = validateAssetsDirectory();
   if (!validation.valid) {
     console.error(`Assets not found: ${validation.error}`);
-    console.error('Make sure to run the bundle script first: npm run bundle');
+    console.error('Make sure to run bundle script first: npm run bundle');
     process.exit(1);
   }
 
@@ -123,11 +139,10 @@ async function main(): Promise<void> {
       break;
     
     case 'install':
-      await runInstallCommand(args[0], args[1], cli.flags.target);
+      await runInstallCommand(args[0], args[1], cli.flags.target, cli.flags.platform);
       break;
     
     case undefined:
-      // No command - run interactive mode
       await runInteractive();
       break;
     

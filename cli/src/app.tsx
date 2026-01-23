@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
-import { listAssets, getAssetContent, installAsset, AssetType } from './utils/assets.js';
+import { listAssets, getAssetContent, installAsset, AssetType, Platform } from './utils/assets.js';
 
-type View = 'HOME' | 'LIST' | 'PREVIEW' | 'INSTALLING' | 'SUCCESS' | 'ERROR';
+type View = 'HOME' | 'TARGET' | 'LIST' | 'PREVIEW' | 'INSTALLING' | 'SUCCESS' | 'ERROR';
 
-// UI Theme
 const THEME = {
   primary: 'green',
   secondary: 'cyan',
@@ -22,6 +21,12 @@ interface Category {
   description: string;
 }
 
+interface TargetOption {
+  label: string;
+  value: Platform;
+  description: string;
+}
+
 const CATEGORIES: Category[] = [
   { label: '⚡ Skills', value: 'skills', icon: '⚡', description: 'Reusable AI skill prompts' },
   { label: '🤖 Agents', value: 'agents', icon: '🤖', description: 'Autonomous AI agents' },
@@ -29,31 +34,33 @@ const CATEGORIES: Category[] = [
   { label: '🔌 MCP Servers', value: 'mcp', icon: '🔌', description: 'Model Context Protocol servers' },
 ];
 
+const TARGET_OPTIONS: TargetOption[] = [
+  { label: '🤖 GitHub Copilot', value: 'github', description: '.github/ + .vscode/mcp.json' },
+  { label: '🔓 OpenCode', value: 'opencode', description: '.opencode/ + opencode.json' },
+];
+
 const PREVIEW_LINES = 15;
 
-// Header component
 const Header: React.FC = () => (
-  <Box flexDirection="column" marginBottom={1}>
+  <Box flexDirection="column">
     <Text color={THEME.primary} bold>
-      ╔══════════════════════════════════════════╗
+      ╔══════════════════════════════════════╗
     </Text>
     <Text color={THEME.primary} bold>
-      ║   Context Engineering CLI  v2.0.0        ║
+      ║   Context Engineering CLI  v2.0.5        ║
     </Text>
     <Text color={THEME.primary} bold>
-      ╚══════════════════════════════════════════╝
+      ╚══════════════════════════════════════╝
     </Text>
   </Box>
 );
 
-// Breadcrumb component
 const Breadcrumb: React.FC<{ path: string[] }> = ({ path }) => (
-  <Box marginBottom={1}>
+  <Box>
     <Text dimColor>{path.join(' › ')}</Text>
   </Box>
 );
 
-// Status bar with keyboard hints
 const StatusBar: React.FC<{ hints: string[] }> = ({ hints }) => (
   <Box marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
     <Text dimColor>{hints.join('  │  ')}</Text>
@@ -70,8 +77,8 @@ const App: React.FC = () => {
   const [previewScroll, setPreviewScroll] = useState(0);
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [platform, setPlatform] = useState<Platform>('github');
 
-  // Load items when entering LIST view
   useEffect(() => {
     if (view === 'LIST' && category) {
       listAssets(category)
@@ -83,7 +90,6 @@ const App: React.FC = () => {
     }
   }, [view, category]);
 
-  // Load preview content
   useEffect(() => {
     if (view === 'PREVIEW' && category && selectedItem) {
       setPreviewScroll(0);
@@ -101,14 +107,19 @@ const App: React.FC = () => {
     }
   }, [view, category, selectedItem]);
 
-  // Handle keyboard input
   useInput((input, key) => {
-    // Global: q to quit from HOME
     if (view === 'HOME' && (input === 'q' || key.escape)) {
       exit();
     }
 
-    // Preview scrolling
+    if (view === 'HOME' && input === 't') {
+      setView('TARGET');
+    }
+
+    if (view === 'TARGET' && (input === 'q' || key.escape)) {
+      setView('HOME');
+    }
+
     if (view === 'PREVIEW') {
       if (key.upArrow) {
         setPreviewScroll((prev: number) => Math.max(0, prev - 1));
@@ -117,9 +128,8 @@ const App: React.FC = () => {
       } else if (key.escape) {
         setView('LIST');
       } else if (key.return || input === 'i') {
-        // Install
         setView('INSTALLING');
-        installAsset(category!, selectedItem!)
+        installAsset(category!, selectedItem!, { platform, targetDir: process.cwd() })
           .then(() => {
             setMessage(`Successfully installed "${selectedItem}"`);
             setView('SUCCESS');
@@ -131,7 +141,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Success/Error: return to home
     if ((view === 'SUCCESS' || view === 'ERROR') && (key.return || key.escape)) {
       setView('HOME');
       setCategory(null);
@@ -140,16 +149,17 @@ const App: React.FC = () => {
       setMessage('');
     }
 
-    // List view: escape to go back
     if (view === 'LIST' && key.escape) {
       setView('HOME');
       setCategory(null);
     }
   });
 
-  // Build breadcrumb path
   const breadcrumbPath = useMemo(() => {
     const path = ['Home'];
+    if (view === 'TARGET') {
+      path.push('Target');
+    }
     if (category) {
       path.push(CATEGORIES.find(c => c.value === category)?.label.replace(/^[^\s]+\s/, '') || category);
     }
@@ -157,21 +167,23 @@ const App: React.FC = () => {
       path.push(selectedItem);
     }
     return path;
-  }, [category, selectedItem]);
+  }, [category, selectedItem, view]);
 
-  // Category selection handler
   const handleCategorySelect = (item: { value: string }) => {
     setCategory(item.value as AssetType);
     setView('LIST');
   };
 
-  // Item selection handler
   const handleItemSelect = (item: { value: string }) => {
     setSelectedItem(item.value);
     setView('PREVIEW');
   };
 
-  // HOME view
+  const handleTargetSelect = (item: { value: string }) => {
+    setPlatform(item.value as Platform);
+    setView('HOME');
+  };
+
   if (view === 'HOME') {
     const categoryItems = CATEGORIES.map(cat => ({
       label: cat.label,
@@ -181,6 +193,13 @@ const App: React.FC = () => {
     return (
       <Box flexDirection="column" padding={1}>
         <Header />
+        <Box paddingX={1}>
+          <Text dimColor>Target: </Text>
+          <Text color={THEME.accent} bold>
+            {platform === 'github' ? '🤖 GitHub Copilot' : '🔓 OpenCode'}
+          </Text>
+          <Text dimColor>  [t] Change</Text>
+        </Box>
         <Text>Select a category:</Text>
         <Box marginTop={1}>
           <SelectInput
@@ -196,12 +215,43 @@ const App: React.FC = () => {
             )}
           />
         </Box>
-        <StatusBar hints={['↑↓ Navigate', '⏎ Select', 'q Quit']} />
+        <StatusBar hints={['↑↓ Navigate', '⏎ Select', 't Target', 'q Quit']} />
       </Box>
     );
   }
 
-  // LIST view
+  if (view === 'TARGET') {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Breadcrumb path={breadcrumbPath} />
+        <Box marginBottom={1}>
+          <Text>Select target platform:</Text>
+        </Box>
+        <Box marginTop={1}>
+          <SelectInput
+            items={TARGET_OPTIONS}
+            onSelect={handleTargetSelect}
+            indicatorComponent={({ isSelected }: { isSelected?: boolean }) => (
+              <Text color={THEME.primary}>{isSelected ? '▶ ' : '  '}</Text>
+            )}
+            itemComponent={({ isSelected, label }: { isSelected?: boolean; label: string }) => {
+              const opt = TARGET_OPTIONS.find(o => o.label === label);
+              return (
+                <Box flexDirection="column">
+                  <Text color={isSelected ? THEME.secondary : undefined} bold={isSelected}>
+                    {label}
+                  </Text>
+                  {opt?.description && <Text dimColor>{opt.description}</Text>}
+                </Box>
+              );
+            }}
+          />
+        </Box>
+        <StatusBar hints={['↑↓ Navigate', '⏎ Select', 'Esc Back', 'q Quit']} />
+      </Box>
+    );
+  }
+
   if (view === 'LIST') {
     const categoryInfo = CATEGORIES.find(c => c.value === category);
     const listItems = items.map(item => ({ label: item, value: item }));
@@ -209,11 +259,13 @@ const App: React.FC = () => {
     return (
       <Box flexDirection="column" padding={1}>
         <Breadcrumb path={breadcrumbPath.slice(0, 2)} />
-        <Box marginBottom={1}>
-          <Text color={THEME.secondary} bold>
-            {categoryInfo?.icon} {categoryInfo?.label.replace(/^[^\s]+\s/, '')}
-          </Text>
-          <Text dimColor> ({items.length} items)</Text>
+        <Box>
+          <Box marginBottom={1}>
+            <Text color={THEME.secondary} bold>
+              {categoryInfo?.icon} {categoryInfo?.label.replace(/^[^\s]+\s/, '')}
+            </Text>
+            <Text dimColor> ({items.length} items)</Text>
+          </Box>
         </Box>
 
         {items.length === 0 ? (
@@ -240,7 +292,6 @@ const App: React.FC = () => {
     );
   }
 
-  // PREVIEW view
   if (view === 'PREVIEW') {
     const lines = previewContent.split('\n');
     const visibleLines = lines.slice(previewScroll, previewScroll + PREVIEW_LINES);
@@ -284,7 +335,6 @@ const App: React.FC = () => {
     );
   }
 
-  // INSTALLING view
   if (view === 'INSTALLING') {
     return (
       <Box flexDirection="column" padding={1}>
@@ -298,7 +348,6 @@ const App: React.FC = () => {
     );
   }
 
-  // SUCCESS view
   if (view === 'SUCCESS') {
     return (
       <Box flexDirection="column" padding={1}>
@@ -313,15 +362,26 @@ const App: React.FC = () => {
           <Box marginTop={1}>
             <Text>{message}</Text>
           </Box>
-          {category === 'mcp' && (
+          {category === 'mcp' && platform === 'github' && (
             <Box marginTop={1} flexDirection="column">
               <Text dimColor>→ Added to .vscode/mcp.json</Text>
               <Text dimColor>→ Restart VS Code to activate</Text>
             </Box>
           )}
-          {category !== 'mcp' && (
+          {category === 'mcp' && platform === 'opencode' && (
+            <Box marginTop={1} flexDirection="column">
+              <Text dimColor>→ Added to opencode.json</Text>
+              <Text dimColor>→ Restart OpenCode to activate</Text>
+            </Box>
+          )}
+          {category !== 'mcp' && platform === 'github' && (
             <Box marginTop={1}>
               <Text dimColor>→ Installed to .github/{category}/{selectedItem}</Text>
+            </Box>
+          )}
+          {category !== 'mcp' && platform === 'opencode' && (
+            <Box marginTop={1}>
+              <Text dimColor>→ Installed to .opencode/{category}/{selectedItem}</Text>
             </Box>
           )}
         </Box>
@@ -330,7 +390,6 @@ const App: React.FC = () => {
     );
   }
 
-  // ERROR view
   if (view === 'ERROR') {
     return (
       <Box flexDirection="column" padding={1}>
@@ -346,7 +405,7 @@ const App: React.FC = () => {
             <Text>{error}</Text>
           </Box>
           <Box marginTop={1}>
-            <Text dimColor>Please check the error above and try again.</Text>
+            <Text dimColor>Please check error above and try again.</Text>
           </Box>
         </Box>
         <StatusBar hints={['⏎ Continue', 'Esc Home']} />
