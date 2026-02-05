@@ -431,14 +431,36 @@ async function installSkill(name: string, platform: Platform, targetDir: string)
   await fs.copy(sourcePath, targetPath, { overwrite: true });
 }
 
+async function findAgentSource(name: string): Promise<string> {
+  // Try direct path first
+  const directPath = path.join(ASSETS_DIR, 'agents', name + '.md');
+  if (await fs.pathExists(directPath)) {
+    return directPath;
+  }
+  
+  // Search in subdirectories
+  const agentsDir = path.join(ASSETS_DIR, 'agents');
+  const subdirs = await fs.readdir(agentsDir);
+  
+  for (const item of subdirs) {
+    const itemPath = path.join(agentsDir, item);
+    const stat = await fs.stat(itemPath);
+    
+    if (stat.isDirectory()) {
+      const candidatePath = path.join(itemPath, name + '.md');
+      if (await fs.pathExists(candidatePath)) {
+        return candidatePath;
+      }
+    }
+  }
+  
+  throw new Error(`Source agent not found: ${name}`);
+}
+
 async function installAgentForGithub(name: string, targetDir: string): Promise<void> {
-  const sourcePath = PLATFORM_PATHS.github.agents(ASSETS_DIR, name + '.md');
+  const sourcePath = await findAgentSource(name);
   const targetPath = PLATFORM_PATHS.github.agents(targetDir, name);
   
-  if (!await fs.pathExists(sourcePath)) {
-    throw new Error(`Source agent not found: ${name}`);
-  }
-
   await fs.ensureDir(path.dirname(targetPath));
   
   if (await fs.pathExists(targetPath)) {
@@ -451,13 +473,9 @@ async function installAgentForGithub(name: string, targetDir: string): Promise<v
 }
 
 async function installAgentForOpenCode(name: string, targetDir: string): Promise<void> {
-  const sourcePath = path.join(ASSETS_DIR, 'agents', name + '.md');
+  const sourcePath = await findAgentSource(name);
   const targetPath = PLATFORM_PATHS.opencode.agents(targetDir, name);
   
-  if (!await fs.pathExists(sourcePath)) {
-    throw new Error(`Source agent not found: ${name}`);
-  }
-
   const convertedContent = await convertAgentForOpenCode(sourcePath);
   
   await fs.ensureDir(path.dirname(targetPath));
